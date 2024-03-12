@@ -4,22 +4,21 @@
 
 /* Equivalente a init_matrix, solo que la matriz resultante no
  * va a ser guardada para ser liberada más tarde */
-static ResuM init_matrix_man(unsigned rows, unsigned cols)
+static Matrix init_matrix_man(unsigned rows, unsigned cols)
 {
-    ResuM result;
+    Matrix result;
     
-    result.m.rows = rows;
-    result.m.cols = cols;
-    result.m.mat = malloc(sizeof(float) * rows * cols);
-    result.error = result.m.mat == NULL;
+    result.rows = rows;
+    result.cols = cols;
+    result.mat = malloc(sizeof(float) * rows * cols);
     
     return result;
 }
 
-ResuM init_matrix(unsigned rows, unsigned cols)
+Matrix init_matrix(unsigned rows, unsigned cols)
 {
-    ResuM result = init_matrix_man(rows, cols);
-    result.error = result.m.mat == NULL || !push_to_matrix_list(&result.m);
+    Matrix result = init_matrix_man(rows, cols);
+    push_to_matrix_list(&result);
     
     return result;
 }
@@ -55,20 +54,20 @@ void free_matrix(Matrix *M)
     M->mat = NULL;
 }
 
-ResuM multiply_matrix(Matrix *A, Matrix *B)
+Matrix multiply_matrix(Matrix *A, Matrix *B)
 {
-    ResuM result = init_matrix(A->rows, B->cols);
+    Matrix result = init_matrix(A->rows, B->cols);
     int i, j, k;
-    float *result_i_j = result.m.mat;
+    float *result_i_j = result.mat;
 
-    if ((result.error = result.error || A->cols != B->rows)) {
-        if (result.m.mat != NULL)
-            free_matrix(&result.m);
+    if (result.mat == NULL || A->cols != B->rows) {
+        if (result.mat != NULL)
+            free_matrix(&result);
         return result;
     }
 
-    for (i = 0; i < result.m.rows; i++)
-        for (j = 0; j < result.m.cols; ++j, result_i_j++)
+    for (i = 0; i < result.rows; i++)
+        for (j = 0; j < result.cols; ++j, result_i_j++)
             for (*result_i_j = k = 0; k < A->cols; k++)
                 *result_i_j += *read_matrix_at(A, i, k) * *read_matrix_at(B, k, j);
 
@@ -93,7 +92,7 @@ static void cofactor_matrix_of(Matrix *A, int row, int col, Matrix *B)
 ResuF determinant(Matrix *A)
 {
     ResuF result, det_resu;
-    ResuM cof;
+    Matrix cof;
     
     if ((result.error = A->rows != A->cols))
         return result;
@@ -103,17 +102,17 @@ ResuF determinant(Matrix *A)
         result.f = *A->mat;
     else {
         cof = init_matrix_man(A->rows - 1, A->cols - 1);
-        if ((result.error = cof.error))
+        if ((result.error = cof.mat == NULL))
             return result;
 
         /* Tomar la primera fila y calcular el determinante de
          * los cofactores de cada entrada de la fila */
         for (int i = 0; i < A->rows; i++) {
-            cofactor_matrix_of(A, 0, i, &cof.m);
-            det_resu = determinant(&cof.m);
+            cofactor_matrix_of(A, 0, i, &cof);
+            det_resu = determinant(&cof);
 
             if ((result.error = det_resu.error)) {
-                free(cof.m.mat);
+                free(cof.mat);
                 return result;
             }
 
@@ -123,60 +122,57 @@ ResuF determinant(Matrix *A)
                 result.f -= *(A->mat + i) * det_resu.f;
         }
 
-        free(cof.m.mat);
+        free(cof.mat);
     }
 
     return result;
 }
 
-ResuM invert_matrix(Matrix *A)
+Matrix invert_matrix(Matrix *A)
 {
     ResuF detA = determinant(A), detTemp;
-    ResuM result = init_matrix(A->rows, A->cols),
+    Matrix result = init_matrix(A->rows, A->cols),
           tempMat = init_matrix_man(A->rows - 1, A->cols - 1);
     int i, j;
 
     /* Return if det(A) == 0 */
-    if ((result.error = detA.error || detA.f == 0))
-        return result;
+    if (detA.error || detA.f == 0 || result.mat == NULL || tempMat.mat == NULL) {
+        if (tempMat.mat != NULL)
+            free(tempMat.mat);
+        if (result.mat != NULL)
+            free_matrix(&result);
 
-    if (result.error || tempMat.error) {
-        if (!tempMat.error)
-            free(tempMat.m.mat);
-        if (!result.error)
-            free_matrix(&result.m);
-
-        result.error = 1;
         return result;
     }
 
     for (i = 0; i < A->rows; i++)
         for (j = 0; j < A->cols; j++) {
-            cofactor_matrix_of(A, j, i, &tempMat.m);
-            detTemp = determinant(&tempMat.m);
+            cofactor_matrix_of(A, j, i, &tempMat);
+            detTemp = determinant(&tempMat);
 
-            if ((result.error = detTemp.error)) {
-                free(tempMat.m.mat);
+            if (detTemp.error) {
+                free_matrix(&result);
+                free(tempMat.mat);
                 return result;
             }
 
-            *read_matrix_at(&result.m, i, j) =
+            *read_matrix_at(&result, i, j) =
                 (((i + j) % 2 == 0) ? 1 : -1) * detTemp.f / detA.f;
         }
 
-    free(tempMat.m.mat);
+    free(tempMat.mat);
     return result;
 }
 
-ResuM transpose_matrix(Matrix *A)
+Matrix transpose_matrix(Matrix *A)
 {
-    ResuM A_t = init_matrix(A->cols, A->rows);
+    Matrix A_t = init_matrix(A->cols, A->rows);
     int i, j;
 
-    if (!A_t.error)
-        for (i = 0; i < A_t.m.rows; i++)
-            for (j = 0; j < A_t.m.cols; j++)
-                *read_matrix_at(&A_t.m, i, j)= *read_matrix_at(A, j, i);
+    if (A_t.mat != NULL)
+        for (i = 0; i < A_t.rows; i++)
+            for (j = 0; j < A_t.cols; j++)
+                *read_matrix_at(&A_t, i, j)= *read_matrix_at(A, j, i);
 
     return A_t;
 }

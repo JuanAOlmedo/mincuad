@@ -4,18 +4,13 @@ typedef struct {
 } Matrix;
 
 typedef struct {
-    Matrix m;
-    short error;
-} ResuM;
-
-typedef struct {
     float f;
     short error;
 } ResuF;
 
-/* Devuelve un ResuM que contiene la matriz de tamaño rows x cols.
+/* Devuelve un Matrix que contiene la matriz de tamaño rows x cols.
  * Si no hay memoria suficiente, devuelve en estado de error. */
-ResuM init_matrix(unsigned rows, unsigned cols);
+Matrix init_matrix(unsigned rows, unsigned cols);
 
 /* Devuelve M[row, col] */
 float *read_matrix_at(Matrix *M, unsigned row, unsigned col);
@@ -31,7 +26,7 @@ void free_matrix(Matrix *M);
 
 /* Devuelve A * B. Devuelve en estado de error si las matrices son
  * no conformantes o si no hay memoria disponible */
-ResuM multiply_matrix(Matrix *A, Matrix *B);
+Matrix multiply_matrix(Matrix *A, Matrix *B);
 
 /* Imprime A */
 void print_matrix(Matrix *A);
@@ -43,8 +38,8 @@ void get_matrix(Matrix *A);
 ResuF determinant(Matrix *A);
 
 /* Devuelve la transpuesta de A, error si no hay memoria suficiente */
-ResuM transpose_matrix(Matrix *A);
+Matrix transpose_matrix(Matrix *A);
 
 /* Devuelve la inversa de A si existe, error si no o si no hay
  * memoria suficiente */
-ResuM invert_matrix(Matrix *A);
+Matrix invert_matrix(Matrix *A);
