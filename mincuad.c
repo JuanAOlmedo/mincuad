@@ -1,12 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "include/gc.h"
 
 static ResuM A, A_transpose, coefmat, coefmat_inverse, Y, A_t_Y, X;
-
-/* Devuelve n^m */
-int expon(float n, int m);
 
 void exit_and_explain(void);
 
@@ -21,7 +19,12 @@ int main()
     printf("Ingrese largo de la lista de datos: ");
     scanf("%d", &rows);
 
-    A = init_matrix(rows, cols++);
+    if (rows > ++cols) {
+        cols = rows;
+        printf("INFO: Tomando un polinomio del grado del tamaño de la lista");
+    }
+
+    A = init_matrix(rows, cols);
     Y = init_matrix(rows, 1);
 
     if (A.error || Y.error)
@@ -32,7 +35,7 @@ int main()
 
         *read_matrix_at(&Y.m, i, 0) = y;
         for (j = 0; j < cols; j++)
-            *read_matrix_at(&A.m, i, j) = expon(x, cols - j - 1);
+            *read_matrix_at(&A.m, i, j) = powf(x, (float) cols - j - 1);
     }
 
     A_transpose = transpose_matrix(&A.m);
@@ -58,18 +61,6 @@ int main()
     print_matrix(&X.m);
 
     return 0;
-}
-
-int expon(float n, int m)
-{
-    if (m == 0)
-        return 1;
-
-    int resu = 1;
-    for (int i = 0; i < m; i++)
-        resu *= n;
-
-    return resu;
 }
 
 void exit_and_explain(void)
