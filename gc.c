@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "matrix.h"
+#include "include/matrix.h"
 
 static struct matrix_array {
     struct matrix_array *nxt;

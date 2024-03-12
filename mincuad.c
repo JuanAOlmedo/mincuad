@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "gc.h"
+#include "include/gc.h"
 
 static ResuM A, A_transpose, coefmat, coefmat_inverse, Y, A_t_Y, X;
 

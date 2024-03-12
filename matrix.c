@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "gc.h"
+#include "include/gc.h"
 
 /* Equivalente a init_matrix, solo que la matriz resultante no
  * va a ser guardada para ser liberada más tarde */
