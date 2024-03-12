@@ -1,23 +1,24 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "matrix.h"
+#include "gc.h"
 
-static struct matrix_array {
-    struct matrix_array *nxt;
-    float *mat;
-} *matrices = NULL;
-
-static int push_to_matrix_list(Matrix *A);
-
-static void remove_from_matrix_list(float *mat);
-
-ResuM init_matrix(unsigned rows, unsigned cols)
+/* Equivalente a init_matrix, solo que la matriz resultante no
+ * va a ser guardada para ser liberada más tarde */
+static ResuM init_matrix_man(unsigned rows, unsigned cols)
 {
     ResuM result;
     
     result.m.rows = rows;
     result.m.cols = cols;
     result.m.mat = malloc(sizeof(float) * rows * cols);
+    result.error = result.m.mat == NULL;
+    
+    return result;
+}
+
+ResuM init_matrix(unsigned rows, unsigned cols)
+{
+    ResuM result = init_matrix_man(rows, cols);
     result.error = result.m.mat == NULL || !push_to_matrix_list(&result.m);
     
     return result;
@@ -54,56 +55,6 @@ void free_matrix(Matrix *M)
     M->mat = NULL;
 }
 
-void free_all(void)
-{
-    float *aux;
-
-    while (matrices != NULL) {
-        aux = matrices->mat;
-        remove_from_matrix_list(aux);
-        free(aux);
-    }
-}
-
-static void remove_from_matrix_list(float *mat)
-{
-    struct matrix_array *aux, *it = matrices;
-
-    if (it->mat != mat) {
-        for (; it->nxt != NULL && it->nxt->mat != mat; it = it->nxt)
-            ;
-
-        aux = it->nxt;
-        it->nxt = it->nxt->nxt;
-    } else {
-        aux = matrices;
-        matrices = matrices->nxt;
-    }
-
-    free(aux);
-}
-
-static int push_to_matrix_list(Matrix *A)
-{
-    struct matrix_array *it, *el = malloc(sizeof(struct matrix_array));    
-
-    if (el == NULL)
-        return 0;
-    
-    if (matrices == NULL)
-        matrices = el;
-    else {
-        for (it = matrices; it->nxt != NULL; it = it->nxt)
-            ;
-        it->nxt = el;
-    }
-
-    el->mat = A->mat;
-    el->nxt = NULL;
-
-    return 1;
-}
-
 ResuM multiply_matrix(Matrix *A, Matrix *B)
 {
     ResuM result = init_matrix(A->rows, B->cols);
@@ -124,7 +75,9 @@ ResuM multiply_matrix(Matrix *A, Matrix *B)
     return result;
 }
 
-void cofactor_matrix_of(Matrix *A, int row, int col, Matrix *B)
+/* Devuelve en B la Matriz A sin la columna col ni la fila row. 
+ * Se asume que B está bien inicializada */
+static void cofactor_matrix_of(Matrix *A, int row, int col, Matrix *B)
 {
     float *matB = B->mat;
     float *matA = A->mat;
@@ -149,7 +102,7 @@ ResuF determinant(Matrix *A)
     if (A->rows == 1)
         result.f = *A->mat;
     else {
-        cof = init_matrix(A->rows - 1, A->cols - 1);
+        cof = init_matrix_man(A->rows - 1, A->cols - 1);
         if ((result.error = cof.error))
             return result;
 
@@ -160,7 +113,7 @@ ResuF determinant(Matrix *A)
             det_resu = determinant(&cof.m);
 
             if ((result.error = det_resu.error)) {
-                free_matrix(&cof.m);
+                free(cof.m.mat);
                 return result;
             }
 
@@ -170,7 +123,7 @@ ResuF determinant(Matrix *A)
                 result.f -= *(A->mat + i) * det_resu.f;
         }
 
-        free_matrix(&cof.m);
+        free(cof.m.mat);
     }
 
     return result;
@@ -180,7 +133,7 @@ ResuM invert_matrix(Matrix *A)
 {
     ResuF detA = determinant(A), detTemp;
     ResuM result = init_matrix(A->rows, A->cols),
-          tempMat = init_matrix(A->rows - 1, A->cols - 1);
+          tempMat = init_matrix_man(A->rows - 1, A->cols - 1);
     int i, j;
 
     /* Return if det(A) == 0 */
@@ -189,7 +142,7 @@ ResuM invert_matrix(Matrix *A)
 
     if (result.error || tempMat.error) {
         if (!tempMat.error)
-            free_matrix(&tempMat.m);
+            free(tempMat.m.mat);
         if (!result.error)
             free_matrix(&result.m);
 
@@ -203,7 +156,7 @@ ResuM invert_matrix(Matrix *A)
             detTemp = determinant(&tempMat.m);
 
             if ((result.error = detTemp.error)) {
-                free_matrix(&tempMat.m);
+                free(tempMat.m.mat);
                 return result;
             }
 
@@ -211,7 +164,7 @@ ResuM invert_matrix(Matrix *A)
                 (((i + j) % 2 == 0) ? 1 : -1) * detTemp.f / detA.f;
         }
 
-    free_matrix(&tempMat.m);
+    free(tempMat.m.mat);
     return result;
 }
 

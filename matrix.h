@@ -29,9 +29,6 @@ float *row(Matrix *M, unsigned row);
 /* Libera el puntero a la matriz */
 void free_matrix(Matrix *M);
 
-/* Libera todas las matrices declaradas */
-void free_all(void);
-
 /* Devuelve A * B. Devuelve en estado de error si las matrices son
  * no conformantes o si no hay memoria disponible */
 ResuM multiply_matrix(Matrix *A, Matrix *B);
@@ -44,10 +41,6 @@ void get_matrix(Matrix *A);
 
 /* Devuelve det(A), error si la matrix no es cuadrada */
 ResuF determinant(Matrix *A);
-
-/* Devuelve en B la Matriz A sin la columna col ni la fila row. 
- * Se asume que B está bien inicializada */
-void cofactor_matrix_of(Matrix *A, int row, int col, Matrix *B);
 
 /* Devuelve la transpuesta de A, error si no hay memoria suficiente */
 ResuM transpose_matrix(Matrix *A);
