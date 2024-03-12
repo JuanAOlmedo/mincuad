@@ -35,7 +35,7 @@ int main()
 
         *read_matrix_at(&Y, i, 0) = y;
         for (j = 0; j < cols; j++)
-            *read_matrix_at(&A, i, j) = powf(x, (float) cols - j - 1);
+            *read_matrix_at(&A, i, j) =(double) powf(x, (float) cols - j - 1);
     }
 
     A_transpose = transpose_matrix(&A);
@@ -58,7 +58,14 @@ int main()
     if (X.mat == NULL)
         exit_and_explain();
 
-    print_matrix(&X);
+    puts("El polinomio que mejor aproxima la lista de datos es:");
+    for (i = 0; i < X.rows; i++) {
+        printf((*read_matrix_at(&X, i, 0) >= 0) ? "+ " : "- ");
+        if (i < X.rows - 1)
+            printf("%1.4f * x^%d ", fabs(*read_matrix_at(&X, i, 0)), X.rows - i - 1);
+        else 
+            printf("%1.4f\n", fabs(*read_matrix_at(&X, i, 0)));
+    }
 
     return 0;
 }

@@ -3,10 +3,10 @@
 
 static struct matrix_array {
     struct matrix_array *nxt;
-    float *mat;
+    double *mat;
 } *matrices = NULL;
 
-void remove_from_matrix_list(float *mat)
+void remove_from_matrix_list(double *mat)
 {
     struct matrix_array *aux, *it = matrices;
 
@@ -45,7 +45,7 @@ void push_to_matrix_list(Matrix *A)
 
 void free_all(void)
 {
-    float *aux;
+    double *aux;
 
     while (matrices != NULL) {
         aux = matrices->mat;

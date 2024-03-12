@@ -1,10 +1,10 @@
 typedef struct {
    unsigned rows, cols;
-   float *mat;
+   double *mat;
 } Matrix;
 
 typedef struct {
-    float f;
+    double f;
     short error;
 } ResuF;
 
@@ -13,13 +13,13 @@ typedef struct {
 Matrix init_matrix(unsigned rows, unsigned cols);
 
 /* Devuelve M[row, col] */
-float *read_matrix_at(Matrix *M, unsigned row, unsigned col);
+double *read_matrix_at(Matrix *M, unsigned row, unsigned col);
 
 /* Equivalente a read_matrix_at(M, 0, col) */
-float *col(Matrix *M, unsigned col);
+double *col(Matrix *M, unsigned col);
 
 /* Equivalente a read_matrix_at(M, row, 0) */
-float *row(Matrix *M, unsigned row);
+double *row(Matrix *M, unsigned row);
 
 /* Libera el puntero a la matriz */
 void free_matrix(Matrix *M);

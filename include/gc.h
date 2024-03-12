@@ -10,4 +10,4 @@ void free_all(void);
 int push_to_matrix_list(Matrix *A);
 
 /* Sacar matriz de lista */
-void remove_from_matrix_list(float *mat);
+void remove_from_matrix_list(double *mat);

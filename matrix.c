@@ -10,7 +10,7 @@ static Matrix init_matrix_man(unsigned rows, unsigned cols)
     
     result.rows = rows;
     result.cols = cols;
-    result.mat = malloc(sizeof(float) * rows * cols);
+    result.mat = malloc(sizeof(double) * rows * cols);
     
     return result;
 }
@@ -23,7 +23,7 @@ Matrix init_matrix(unsigned rows, unsigned cols)
     return result;
 }
 
-float *read_matrix_at(Matrix *M, unsigned row, unsigned col)
+double *read_matrix_at(Matrix *M, unsigned row, unsigned col)
 {
     if (row < M->rows && col < M->cols)
         return M->mat + row * M->cols + col;
@@ -31,7 +31,7 @@ float *read_matrix_at(Matrix *M, unsigned row, unsigned col)
     return NULL;
 }
 
-float *col(Matrix *M, unsigned col)
+double *col(Matrix *M, unsigned col)
 {
     if (col < M->cols)
         return M->mat + col;
@@ -39,7 +39,7 @@ float *col(Matrix *M, unsigned col)
     return NULL;
 }
 
-float *row(Matrix *M, unsigned row)
+double *row(Matrix *M, unsigned row)
 {
     if (row < M->rows)
         return M->mat + row * M->cols;
@@ -58,7 +58,7 @@ Matrix multiply_matrix(Matrix *A, Matrix *B)
 {
     Matrix result = init_matrix(A->rows, B->cols);
     int i, j, k;
-    float *result_i_j = result.mat;
+    double *result_i_j = result.mat;
 
     if (result.mat == NULL || A->cols != B->rows) {
         if (result.mat != NULL)
@@ -78,8 +78,8 @@ Matrix multiply_matrix(Matrix *A, Matrix *B)
  * Se asume que B está bien inicializada */
 static void cofactor_matrix_of(Matrix *A, int row, int col, Matrix *B)
 {
-    float *matB = B->mat;
-    float *matA = A->mat;
+    double *matB = B->mat;
+    double *matA = A->mat;
 
     while (matB - B->mat < B->rows * B->cols)
         /* Si matA apunta a la fila row o a la columna col */
@@ -183,7 +183,7 @@ void print_matrix(Matrix *A)
 
     for (i = 0; i < A->rows; i++) {
         for (j = 0; j < A->cols; j++)
-            printf("%10.3f ", *read_matrix_at(A, i, j));
+            printf("%10.5f ", *read_matrix_at(A, i, j));
 
         putchar('\n');
     }
@@ -191,9 +191,9 @@ void print_matrix(Matrix *A)
 
 void get_matrix(Matrix *A)
 {
-    float *mat;
+    double *mat;
 
-    /* Scan rows * cols floats from stdin */
+    /* Scan rows * cols doubles from stdin */
     for (mat = A->mat; mat - A->mat < A->rows * A->cols; mat++)
-        scanf("%f", mat);
+        scanf("%lf", mat);
 }
