@@ -19,7 +19,7 @@ int main()
     printf("Ingrese largo de la lista de datos: ");
     scanf("%d", &rows);
 
-    if (rows > ++cols) {
+    if (rows < ++cols) {
         cols = rows;
         printf("INFO: Tomando un polinomio del grado del tamaño de la lista");
     }
