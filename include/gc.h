@@ -1,3 +1,5 @@
+#ifndef _GC_H
+#define _GC_H
 #include "matrix.h"
 
 /* Acumula todas las matrices definidas en una lista
@@ -11,3 +13,5 @@ int push_to_matrix_list(Matrix *A);
 
 /* Sacar matriz de lista */
 void remove_from_matrix_list(double *mat);
+
+#endif

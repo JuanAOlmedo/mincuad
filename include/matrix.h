@@ -1,3 +1,6 @@
+#ifndef _MATRIX_H
+#define _MATRIX_H
+
 typedef struct {
    unsigned rows, cols;
    double *mat;
@@ -43,3 +46,5 @@ Matrix transpose_matrix(Matrix *A);
 /* Devuelve la inversa de A si existe, error si no o si no hay
  * memoria suficiente */
 Matrix invert_matrix(Matrix *A);
+
+#endif

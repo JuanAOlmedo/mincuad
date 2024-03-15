@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "include/matrix.h"
 #include "include/gc.h"
 
 static Matrix A, A_transpose, coefmat, coefmat_inverse, Y, A_t_Y, X;
