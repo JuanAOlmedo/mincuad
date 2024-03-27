@@ -63,7 +63,7 @@ void free_all(void)
 Matrix multiply_matrix(Matrix *A, Matrix *B)
 {
     Matrix result = init_matrix(A->rows, B->cols);
-    int i, j, k;
+    unsigned i, j, k;
     double *result_i_j = result.mat;
 
     if (result.mat == NULL || A->cols != B->rows) {
@@ -82,7 +82,7 @@ Matrix multiply_matrix(Matrix *A, Matrix *B)
 
 /* Devuelve en B la Matriz A sin la columna col ni la fila row. 
  * Se asume que B está bien inicializada */
-static void cofactor_matrix_of(Matrix *A, int row, int col, Matrix *B)
+static void cofactor_matrix_of(Matrix *A, unsigned row, unsigned col, Matrix *B)
 {
     double *matB = B->mat;
     double *matA = A->mat;
@@ -139,7 +139,7 @@ Matrix invert_matrix(Matrix *A)
     ResuF detA = determinant(A), detTemp;
     Matrix result = init_matrix(A->rows, A->cols),
            tempMat = init_matrix_man(A->rows - 1, A->cols - 1);
-    int i, j;
+    unsigned i, j;
 
     /* Return if det(A) == 0 */
     if (detA.error || detA.f == 0 || result.mat == NULL || tempMat.mat == NULL) {
@@ -173,7 +173,7 @@ Matrix invert_matrix(Matrix *A)
 Matrix transpose_matrix_of(Matrix *A)
 {
     Matrix A_t = init_matrix(A->cols, A->rows);
-    int i, j;
+    unsigned i, j;
 
     if (A_t.mat != NULL)
         for (i = 0; i < A_t.rows; i++)
@@ -185,7 +185,7 @@ Matrix transpose_matrix_of(Matrix *A)
 
 void transpose_matrix(Matrix *A)
 {
-    int i, j;
+    unsigned i, j;
     double aux;
 
     for (i = 0; i < A->rows; i++)
