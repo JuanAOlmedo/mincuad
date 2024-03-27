@@ -1,21 +1,23 @@
-#include <stdlib.h>
+#include "include/gc.h"
 #include "include/matrix.h"
 
-static struct matrix_array {
-    struct matrix_array *nxt;
-    double *mat;
-} *matrices = NULL;
+static struct matrix_list *matrices = NULL;
+
+struct matrix_list *get_matrix_list(void)
+{
+    return matrices;
+}
 
 void remove_from_matrix_list(double *mat)
 {
-    struct matrix_array *aux, *it = matrices;
+    struct matrix_list *aux, *it = matrices;
 
-    if (it->mat != mat) {
+    if (matrices->mat != mat) {
         for (; it->nxt != NULL && it->nxt->mat != mat; it = it->nxt)
             ;
 
         aux = it->nxt;
-        it->nxt = it->nxt->nxt;
+        it->nxt = aux->nxt;
     } else {
         aux = matrices;
         matrices = matrices->nxt;
@@ -26,7 +28,7 @@ void remove_from_matrix_list(double *mat)
 
 void push_to_matrix_list(Matrix *A)
 {
-    struct matrix_array *it, *el = malloc(sizeof(struct matrix_array));    
+    struct matrix_list *it, *el = malloc(sizeof(struct matrix_list));    
 
     if (el == NULL)
         return;
@@ -39,17 +41,6 @@ void push_to_matrix_list(Matrix *A)
         it->nxt = el;
     }
 
-    el->mat = A->mat;
-    el->nxt = NULL;
+    *el = (struct matrix_list) {NULL, A->mat};
 }
 
-void free_all(void)
-{
-    double *aux;
-
-    while (matrices != NULL) {
-        aux = matrices->mat;
-        remove_from_matrix_list(aux);
-        free(aux);
-    }
-}

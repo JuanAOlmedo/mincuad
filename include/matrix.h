@@ -27,6 +27,9 @@ double *row(Matrix *M, unsigned row);
 /* Libera el puntero a la matriz */
 void free_matrix(Matrix *M);
 
+/* Libera todas las matrices declaradas */
+void free_all(void);
+
 /* Devuelve A * B. Devuelve en estado de error si las matrices son
  * no conformantes o si no hay memoria disponible */
 Matrix multiply_matrix(Matrix *A, Matrix *B);
@@ -41,7 +44,10 @@ void get_matrix(Matrix *A);
 ResuF determinant(Matrix *A);
 
 /* Devuelve la transpuesta de A, error si no hay memoria suficiente */
-Matrix transpose_matrix(Matrix *A);
+Matrix transpose_matrix_of(Matrix *A);
+
+/* Escribe en A su transpuesta */
+void transpose_matrix(Matrix *A);
 
 /* Devuelve la inversa de A si existe, error si no o si no hay
  * memoria suficiente */

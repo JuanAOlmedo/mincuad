@@ -3,7 +3,6 @@
 #include <string.h>
 #include <math.h>
 #include "include/matrix.h"
-#include "include/gc.h"
 
 static Matrix A, A_transpose, coefmat, coefmat_inverse, Y, A_t_Y, X;
 
@@ -39,7 +38,7 @@ int main()
             *read_matrix_at(&A, i, j) =(double) powf(x, (float) cols - j - 1);
     }
 
-    A_transpose = transpose_matrix(&A);
+    A_transpose = transpose_matrix_of(&A);
     if (A_transpose.mat == NULL)
         exit_and_explain();
 

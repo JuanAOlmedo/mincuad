@@ -6,13 +6,7 @@
  * va a ser guardada para ser liberada más tarde */
 static Matrix init_matrix_man(unsigned rows, unsigned cols)
 {
-    Matrix result;
-    
-    result.rows = rows;
-    result.cols = cols;
-    result.mat = malloc(sizeof(double) * rows * cols);
-    
-    return result;
+    return (Matrix) {rows, cols, malloc(sizeof(double) * rows * cols)};
 }
 
 Matrix init_matrix(unsigned rows, unsigned cols)
@@ -54,6 +48,18 @@ void free_matrix(Matrix *M)
     M->mat = NULL;
 }
 
+void free_all(void)
+{
+    double *aux;
+    struct matrix_list *matrices = get_matrix_list();
+
+    while (matrices != NULL) {
+        aux = matrices->mat;
+        remove_from_matrix_list(aux);
+        free(aux);
+    }
+}
+
 Matrix multiply_matrix(Matrix *A, Matrix *B)
 {
     Matrix result = init_matrix(A->rows, B->cols);
@@ -67,7 +73,7 @@ Matrix multiply_matrix(Matrix *A, Matrix *B)
     }
 
     for (i = 0; i < result.rows; i++)
-        for (j = 0; j < result.cols; ++j, result_i_j++)
+        for (j = 0; j < result.cols; j++, result_i_j++)
             for (*result_i_j = k = 0; k < A->cols; k++)
                 *result_i_j += *read_matrix_at(A, i, k) * *read_matrix_at(B, k, j);
 
@@ -132,7 +138,7 @@ Matrix invert_matrix(Matrix *A)
 {
     ResuF detA = determinant(A), detTemp;
     Matrix result = init_matrix(A->rows, A->cols),
-          tempMat = init_matrix_man(A->rows - 1, A->cols - 1);
+           tempMat = init_matrix_man(A->rows - 1, A->cols - 1);
     int i, j;
 
     /* Return if det(A) == 0 */
@@ -164,7 +170,7 @@ Matrix invert_matrix(Matrix *A)
     return result;
 }
 
-Matrix transpose_matrix(Matrix *A)
+Matrix transpose_matrix_of(Matrix *A)
 {
     Matrix A_t = init_matrix(A->cols, A->rows);
     int i, j;
@@ -172,9 +178,22 @@ Matrix transpose_matrix(Matrix *A)
     if (A_t.mat != NULL)
         for (i = 0; i < A_t.rows; i++)
             for (j = 0; j < A_t.cols; j++)
-                *read_matrix_at(&A_t, i, j)= *read_matrix_at(A, j, i);
+                *read_matrix_at(&A_t, i, j) = *read_matrix_at(A, j, i);
 
     return A_t;
+}
+
+void transpose_matrix(Matrix *A)
+{
+    int i, j;
+    double aux;
+
+    for (i = 0; i < A->rows; i++)
+        for (j = i + 1; j < A->cols; j++) {
+            aux = *read_matrix_at(A, i, j);
+            *read_matrix_at(A, i, j) = *read_matrix_at(A, j, i);
+            *read_matrix_at(A, j, i) = aux;
+        }
 }
 
 void print_matrix(Matrix *A)
@@ -194,6 +213,6 @@ void get_matrix(Matrix *A)
     double *mat;
 
     /* Scan rows * cols doubles from stdin */
-    for (mat = A->mat; mat - A->mat < A->rows * A->cols; mat++)
+    for (mat = A->mat; (mat - A->mat) < (A->rows * A->cols); mat++)
         scanf("%lf", mat);
 }
