@@ -51,7 +51,7 @@ void free_matrix(Matrix *M)
 void free_all(void)
 {
     double *aux;
-    struct matrix_list *matrices = get_matrix_list();
+    struct matrix_list *matrices;
 
     while ((matrices = get_matrix_list()) != NULL) {
         aux = matrices->mat;
