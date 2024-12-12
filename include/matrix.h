@@ -27,9 +27,6 @@ double *row(Matrix *M, unsigned row);
 /* Libera el puntero a la matriz */
 void free_matrix(Matrix *M);
 
-/* Libera todas las matrices declaradas */
-void free_all(void);
-
 /* Devuelve A * B. Devuelve en estado de error si las matrices son
  * no conformantes o si no hay memoria disponible */
 Matrix multiply_matrix(Matrix *A, Matrix *B);

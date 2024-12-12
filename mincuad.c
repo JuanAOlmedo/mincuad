@@ -3,16 +3,17 @@
 #include <string.h>
 #include <math.h>
 #include "include/matrix.h"
+#include "include/gc.h"
 
-static Matrix A, A_transpose, coefmat, coefmat_inverse, Y, A_t_Y, X;
 
 void exit_and_explain(void);
 
 int main()
 {
+    Matrix A, A_transpose, coefmat, coefmat_inverse, Y, A_t_Y, X;
     int rows, cols, i, j;
     float x, y;
-    atexit(free_all);
+    atexit(GC_empty);
 
     printf("Ingrese grado de polinomio: ");
     scanf("%d", &cols);
@@ -63,7 +64,7 @@ int main()
         printf((*read_matrix_at(&X, i, 0) >= 0) ? "+ " : "- ");
         if (i < X.rows - 1)
             printf("%1.4f * x^%d ", fabs(*read_matrix_at(&X, i, 0)), X.rows - i - 1);
-        else 
+        else
             printf("%1.4f\n", fabs(*read_matrix_at(&X, i, 0)));
     }
 

@@ -1,3 +1,4 @@
+#include "include/matrix.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "include/gc.h"
@@ -12,8 +13,8 @@ static Matrix init_matrix_man(unsigned rows, unsigned cols)
 Matrix init_matrix(unsigned rows, unsigned cols)
 {
     Matrix result = init_matrix_man(rows, cols);
-    push_to_matrix_list(&result);
-    
+    GC_push(result.mat, free);
+
     return result;
 }
 
@@ -43,21 +44,8 @@ double *row(Matrix *M, unsigned row)
 
 void free_matrix(Matrix *M)
 {
-    remove_from_matrix_list(M->mat);
-    free(M->mat);
+    GC_remove(M->mat);
     M->mat = NULL;
-}
-
-void free_all(void)
-{
-    double *aux;
-    struct matrix_list *matrices;
-
-    while ((matrices = get_matrix_list()) != NULL) {
-        aux = matrices->mat;
-        remove_from_matrix_list(aux);
-        free(aux);
-    }
 }
 
 Matrix multiply_matrix(Matrix *A, Matrix *B)
@@ -80,7 +68,7 @@ Matrix multiply_matrix(Matrix *A, Matrix *B)
     return result;
 }
 
-/* Devuelve en B la Matriz A sin la columna col ni la fila row. 
+/* Devuelve en B la Matriz A sin la columna col ni la fila row.
  * Se asume que B está bien inicializada */
 static void cofactor_matrix_of(Matrix *A, unsigned row, unsigned col, Matrix *B)
 {
@@ -99,7 +87,7 @@ ResuF determinant(Matrix *A)
 {
     ResuF result, det_resu;
     Matrix cof;
-    
+
     if ((result.error = A->rows != A->cols))
         return result;
 

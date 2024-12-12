@@ -1,46 +1,60 @@
 #include "include/gc.h"
-#include "include/matrix.h"
 
-static struct matrix_list *matrices = NULL;
+/* Acumula todas las variables definidas en una lista
+ * para ser liberadas al final del programa */
+struct variable_list {
+    struct variable_list *nxt;
+    void *var;
+    void (*free_fun)(void *);
+};
 
-struct matrix_list *get_matrix_list(void)
+static struct variable_list *variables = NULL;
+
+void GC_remove(void *var)
 {
-    return matrices;
-}
+    struct variable_list *aux, *it = variables;
 
-void remove_from_matrix_list(double *mat)
-{
-    struct matrix_list *aux, *it = matrices;
-
-    if (matrices->mat != mat) {
-        for (; it->nxt != NULL && it->nxt->mat != mat; it = it->nxt)
+    if (variables->var != var) {
+        for (; it->nxt != NULL && it->nxt->var != var; it = it->nxt)
             ;
 
         aux = it->nxt;
         it->nxt = aux->nxt;
     } else {
-        aux = matrices;
-        matrices = matrices->nxt;
+        aux = variables;
+        variables = variables->nxt;
     }
 
+    aux->free_fun(aux->var);
     free(aux);
 }
 
-void push_to_matrix_list(Matrix *A)
+void GC_push(void *var, void (*free_fun)(void *))
 {
-    struct matrix_list *it, *el = malloc(sizeof(struct matrix_list));    
+    struct variable_list *it, *el = malloc(sizeof(struct variable_list));
 
     if (el == NULL)
         return;
-    
-    if (matrices == NULL)
-        matrices = el;
+
+    if (variables == NULL)
+        variables = el;
     else {
-        for (it = matrices; it->nxt != NULL; it = it->nxt)
+        for (it = variables; it->nxt != NULL; it = it->nxt)
             ;
         it->nxt = el;
     }
 
-    *el = (struct matrix_list) {NULL, A->mat};
+    *el = (struct variable_list) {NULL, var, free_fun};
 }
 
+void GC_empty(void)
+{
+    struct variable_list *aux;
+
+    while (variables != NULL) {
+        aux = variables;
+        variables = variables->nxt;
+        aux->free_fun(aux->var);
+        free(aux);
+    }
+}
