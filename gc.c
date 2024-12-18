@@ -15,8 +15,8 @@ void GC_remove(void *var)
     struct variable_list *aux, *it = variables;
 
     if (variables->var != var) {
-        for (; it->nxt != NULL && it->nxt->var != var; it = it->nxt)
-            ;
+        while (it->nxt != NULL && it->nxt->var != var)
+            it = it->nxt;
 
         aux = it->nxt;
         it->nxt = aux->nxt;
@@ -31,18 +31,18 @@ void GC_remove(void *var)
 
 void GC_push(void *var, void (*free_fun)(void *))
 {
-    struct variable_list *it, *el = malloc(sizeof(struct variable_list));
+    struct variable_list *it = variables,
+        *el = malloc(sizeof(struct variable_list));
 
     if (el == NULL)
         return;
 
-    if (variables == NULL)
-        variables = el;
-    else {
-        for (it = variables; it->nxt != NULL; it = it->nxt)
-            ;
+    if (variables != NULL) {
+        while (it->nxt != NULL)
+            it = it->nxt;
         it->nxt = el;
-    }
+    } else
+        variables = el;
 
     *el = (struct variable_list) {NULL, var, free_fun};
 }
