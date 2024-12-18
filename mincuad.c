@@ -5,7 +5,6 @@
 #include "include/matrix.h"
 #include "include/gc.h"
 
-
 void exit_and_explain(void);
 
 int main()
@@ -39,7 +38,7 @@ int main()
             *read_matrix_at(&A, i, j) =(double) powf(x, (float) cols - j - 1);
     }
 
-    A_transpose = transpose_matrix_of(&A);
+    A_transpose = transpose_matrix_of(A);
     if (A_transpose.mat == NULL)
         exit_and_explain();
 

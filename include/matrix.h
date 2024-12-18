@@ -40,8 +40,8 @@ void get_matrix(Matrix *A);
 /* Devuelve det(A), error si la matrix no es cuadrada */
 ResuF determinant(Matrix *A);
 
-/* Devuelve la transpuesta de A, error si no hay memoria suficiente */
-Matrix transpose_matrix_of(Matrix *A);
+/* Devuelve la transpuesta de A */
+Matrix transpose_matrix_of(Matrix A);
 
 /* Escribe en A su transpuesta */
 void transpose_matrix(Matrix *A);

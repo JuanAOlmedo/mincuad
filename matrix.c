@@ -1,6 +1,7 @@
 #include "include/matrix.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "include/gc.h"
 
 /* Equivalente a init_matrix, solo que la matriz resultante no
@@ -158,15 +159,12 @@ Matrix invert_matrix(Matrix *A)
     return result;
 }
 
-Matrix transpose_matrix_of(Matrix *A)
+Matrix transpose_matrix_of(Matrix A)
 {
-    Matrix A_t = init_matrix(A->cols, A->rows);
-    unsigned i, j;
+    Matrix A_t = init_matrix(A.cols, A.rows);
 
     if (A_t.mat != NULL)
-        for (i = 0; i < A_t.rows; i++)
-            for (j = 0; j < A_t.cols; j++)
-                *read_matrix_at(&A_t, i, j) = *read_matrix_at(A, j, i);
+        memcpy(A_t.mat, A.mat, A.cols * A.rows * sizeof(double));
 
     return A_t;
 }
