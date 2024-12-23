@@ -11,6 +11,11 @@ typedef struct {
     short error;
 } ResuF;
 
+struct LU {
+    Matrix L, U;
+    unsigned *p, n;
+};
+
 /* Devuelve un Matrix que contiene la matriz de tamaño rows x cols.
  * Si no hay memoria suficiente, devuelve en estado de error. */
 Matrix init_matrix(unsigned rows, unsigned cols);
@@ -50,4 +55,6 @@ void transpose_matrix(Matrix *A);
  * memoria suficiente */
 Matrix invert_matrix(Matrix *A);
 
+/* Devuelve la descomposición LU de A */
+struct LU lu(Matrix A);
 #endif
