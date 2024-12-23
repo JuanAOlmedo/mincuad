@@ -169,7 +169,7 @@ Matrix transpose_matrix_of(Matrix A)
     if (A_t.mat != NULL)
         for (unsigned i = 0; i < A_t.rows; i++)
             for (unsigned j = 0; j < A_t.cols; j++)
-                *read_matrix_at(&A_t, i, j) = *read_matrix_at(A, j, i);
+                *read_matrix_at(&A_t, i, j) = *read_matrix_at(&A, j, i);
 
     return A_t;
 }
