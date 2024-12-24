@@ -20,6 +20,9 @@ struct LU {
  * Si no hay memoria suficiente, devuelve en estado de error. */
 Matrix init_matrix(unsigned rows, unsigned cols);
 
+/* Devuelve una copia de A */
+Matrix copy_matrix(Matrix A);
+
 /* Devuelve M[row, col] */
 double *read_matrix_at(Matrix *M, unsigned row, unsigned col);
 
@@ -32,9 +35,17 @@ double *row(Matrix *M, unsigned row);
 /* Libera el puntero a la matriz */
 void free_matrix(Matrix *M);
 
+/* Devuelve A * x. Devuelve en estado de error si no hay memoria
+ * disponible */
+Matrix multiply_matrix(Matrix *A, double x);
+
 /* Devuelve A * B. Devuelve en estado de error si las matrices son
  * no conformantes o si no hay memoria disponible */
-Matrix multiply_matrix(Matrix *A, Matrix *B);
+Matrix multiply_matrices(Matrix *A, Matrix *B);
+
+/* Devuelve A + B. Devuelve en estado de error si las matrices son
+ * no conformantes o si no hay memoria disponible */
+Matrix add_matrices(Matrix *A, Matrix *B);
 
 /* Imprime A */
 void print_matrix(Matrix *A);

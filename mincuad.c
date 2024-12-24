@@ -42,8 +42,8 @@ int main()
     if (A_transpose.mat == NULL)
         exit_and_explain();
 
-    coefmat = multiply_matrix(&A_transpose, &A);
-    A_t_Y = multiply_matrix(&A_transpose, &Y);
+    coefmat = multiply_matrices(&A_transpose, &A);
+    A_t_Y = multiply_matrices(&A_transpose, &Y);
 
     if (coefmat.mat == NULL || A_t_Y.mat == NULL)
         exit_and_explain();
@@ -53,7 +53,7 @@ int main()
     if (coefmat_inverse.mat == NULL)
         exit_and_explain();
 
-    X = multiply_matrix(&coefmat_inverse, &A_t_Y);
+    X = multiply_matrices(&coefmat_inverse, &A_t_Y);
 
     if (X.mat == NULL)
         exit_and_explain();

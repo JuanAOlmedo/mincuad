@@ -50,7 +50,18 @@ void free_matrix(Matrix *M)
     M->mat = NULL;
 }
 
-Matrix multiply_matrix(Matrix *A, Matrix *B)
+Matrix multiply_matrix(Matrix *A, double x)
+{
+    Matrix result = init_matrix(A->rows, A->cols);
+
+    if (result.mat != NULL)
+        for (unsigned i = 0; i < result.rows * result.cols; i++)
+            result.mat[i]= A->mat[i] * x;
+
+    return result;
+}
+
+Matrix multiply_matrices(Matrix *A, Matrix *B)
 {
     Matrix result = init_matrix(A->rows, B->cols);
     unsigned i, j, k;
@@ -66,6 +77,20 @@ Matrix multiply_matrix(Matrix *A, Matrix *B)
         for (j = 0; j < result.cols; j++, result_i_j++)
             for (*result_i_j = k = 0; k < A->cols; k++)
                 *result_i_j += *read_matrix_at(A, i, k) * *read_matrix_at(B, k, j);
+
+    return result;
+}
+
+Matrix add_matrices(Matrix *A, Matrix *B)
+{
+    Matrix result = (Matrix) {0, 0, NULL};
+
+    if (A->rows == B->rows && A->cols == B->cols)
+        result = init_matrix(A->rows, A->cols);
+
+    if (result.mat != NULL)
+        for (unsigned i = 0; i < result.rows * result.cols; i++)
+            result.mat[i]= A->mat[i] + B->mat[i];
 
     return result;
 }
