@@ -1,6 +1,5 @@
 #ifndef _GC_H
 #define _GC_H
-#include "matrix.h"
 #include <stdlib.h>
 
 /* Añadir variable a lista */
