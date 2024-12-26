@@ -48,12 +48,7 @@ int main()
     if (coefmat.mat == NULL || A_t_Y.mat == NULL)
         exit_and_explain();
 
-    coefmat_inverse = invert_matrix(&coefmat);
-
-    if (coefmat_inverse.mat == NULL)
-        exit_and_explain();
-
-    X = multiply_matrices(&coefmat_inverse, &A_t_Y);
+    X = solve(coefmat, A_t_Y);
 
     if (X.mat == NULL)
         exit_and_explain();

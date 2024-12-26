@@ -68,4 +68,6 @@ Matrix invert_matrix(Matrix *A);
 
 /* Devuelve la descomposición LU de A */
 struct LU lu(Matrix A);
+
+Matrix solve(Matrix A, Matrix b);
 #endif

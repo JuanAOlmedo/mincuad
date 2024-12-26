@@ -177,9 +177,84 @@ Matrix invert_matrix(Matrix *A)
     return result;
 }
 
+static void swap(unsigned *p, unsigned i, unsigned j)
+{
+    unsigned aux = p[i];
+    p[i] = p[j];
+    p[j] = aux;
+}
+
+static void permute_rows(Matrix *A, unsigned *p)
+{
+    unsigned n = A->rows, m = A->cols;
+    unsigned q[n];
+    memcpy(q, p, sizeof(unsigned) * n);
+
+    double aux[m];
+    for (unsigned i = 0; i < n; i++) {
+        if (q[i] != i) {
+            memcpy(aux, row(A, i), sizeof(double) * m);
+            memcpy(row(A, i), row(A, p[i]), sizeof(double) * m);
+            memcpy(row(A, p[i]), aux, sizeof(double) * m);
+            swap(q, i, q[i]);
+        }
+    }
+}
+
+static Matrix forward_sub(Matrix L, Matrix b)
+{
+    Matrix x = init_matrix(L.rows, 1);
+    *read_matrix_at(&x, 0, 0) = *read_matrix_at(&b, 0, 0) / *read_matrix_at(&L, 0, 0);
+    for (unsigned k = 1; k < x.rows; k++) {
+        *read_matrix_at(&x, k, 0) = 0;
+        for (unsigned j = 0; j < k; j++)
+            *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&L, k, j);
+
+        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, k, 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&L, k, k);
+    }
+    return x;
+}
+
+static Matrix back_sub(Matrix U, Matrix b)
+{
+    unsigned n = U.rows;
+    Matrix x = init_matrix(n, 1);
+    *read_matrix_at(&x, n - 1, 0) = *read_matrix_at(&b, n - 1, 0) / *read_matrix_at(&U, n - 1, n - 1);
+    for (int k = n - 2; k >= 0; k--) {
+        *read_matrix_at(&x, k, 0) = 0;
+        for (unsigned j = k + 1; j < n; j++)
+            *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&U, k, j);
+
+        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, k, 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&U, k, k);
+    }
+    return x;
+}
+
+Matrix solve(Matrix A, Matrix b)
+{
+    b = copy_matrix(b);
+    unsigned i, j;
+
+    if (A.rows != b.rows || A.rows != A.cols || b.cols != 1)
+        return (Matrix) {0, 0, NULL};
+
+    struct LU decomp = lu(A);
+    permute_rows(&b, decomp.p);
+    Matrix x = forward_sub(decomp.L, b);
+    free_matrix(&b);
+    b = x;
+    x = back_sub(decomp.U, b);
+    free_matrix(&b);
+    free_matrix(&decomp.L);
+    free_matrix(&decomp.U);
+    GC_remove(decomp.p);
+
+    return x;
+}
+
 Matrix copy_matrix(Matrix A)
 {
-    Matrix B = init_matrix(A.cols, A.rows);
+    Matrix B = init_matrix(A.rows, A.cols);
 
     if (B.mat != NULL)
         memcpy(B.mat, A.mat, A.cols * A.rows * sizeof(double));
@@ -245,30 +320,6 @@ static unsigned max_col(Matrix A, unsigned *p, unsigned col)
         }
 
     return max_i;
-}
-
-static void swap(unsigned *p, unsigned i, unsigned j)
-{
-    unsigned aux = p[i];
-    p[i] = p[j];
-    p[j] = aux;
-}
-
-static void permute_rows(Matrix *A, unsigned *p)
-{
-    unsigned n = A->rows, m = A->cols;
-    unsigned q[n];
-    memcpy(q, p, sizeof(unsigned) * n);
-
-    double aux[m];
-    for (unsigned i = 0; i < n; i++) {
-        if (q[i] != i) {
-            memcpy(aux, row(A, i), sizeof(double) * m);
-            memcpy(row(A, i), row(A, p[i]), sizeof(double) * m);
-            memcpy(row(A, p[i]), aux, sizeof(double) * m);
-            swap(q, i, q[i]);
-        }
-    }
 }
 
 struct LU lu(Matrix A)
