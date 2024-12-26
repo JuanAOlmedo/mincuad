@@ -54,9 +54,8 @@ Matrix multiply_matrix(Matrix *A, double x)
 {
     Matrix result = init_matrix(A->rows, A->cols);
 
-    if (result.mat != NULL)
-        for (unsigned i = 0; i < result.rows * result.cols; i++)
-            result.mat[i]= A->mat[i] * x;
+    for (unsigned i = 0; i < result.rows * result.cols; i++)
+        result.mat[i]= A->mat[i] * x;
 
     return result;
 }
@@ -67,7 +66,7 @@ Matrix multiply_matrices(Matrix *A, Matrix *B)
     unsigned i, j, k;
     double *result_i_j = result.mat;
 
-    if (result.mat == NULL || A->cols != B->rows) {
+    if (A->cols != B->rows) {
         if (result.mat != NULL)
             free_matrix(&result);
         return result;
@@ -88,9 +87,8 @@ Matrix add_matrices(Matrix *A, Matrix *B)
     if (A->rows == B->rows && A->cols == B->cols)
         result = init_matrix(A->rows, A->cols);
 
-    if (result.mat != NULL)
-        for (unsigned i = 0; i < result.rows * result.cols; i++)
-            result.mat[i]= A->mat[i] + B->mat[i];
+    for (unsigned i = 0; i < result.rows * result.cols; i++)
+        result.mat[i]= A->mat[i] + B->mat[i];
 
     return result;
 }
@@ -244,8 +242,7 @@ Matrix copy_matrix(Matrix A)
 {
     Matrix B = init_matrix(A.rows, A.cols);
 
-    if (B.mat != NULL)
-        memcpy(B.mat, A.mat, A.cols * A.rows * sizeof(double));
+    memcpy(B.mat, A.mat, A.cols * A.rows * sizeof(double));
 
     return B;
 }
@@ -254,10 +251,9 @@ Matrix transpose_matrix_of(Matrix A)
 {
     Matrix A_t = init_matrix(A.cols, A.rows);
 
-    if (A_t.mat != NULL)
-        for (unsigned i = 0; i < A_t.rows; i++)
-            for (unsigned j = 0; j < A_t.cols; j++)
-                *read_matrix_at(&A_t, i, j) = *read_matrix_at(&A, j, i);
+    for (unsigned i = 0; i < A_t.rows; i++)
+        for (unsigned j = 0; j < A_t.cols; j++)
+            *read_matrix_at(&A_t, i, j) = *read_matrix_at(&A, j, i);
 
     return A_t;
 }
