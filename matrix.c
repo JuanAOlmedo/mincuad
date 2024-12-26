@@ -141,17 +141,17 @@ static Matrix forward_sub(Matrix L, Matrix b, unsigned *p)
     return x;
 }
 
-static Matrix back_sub(Matrix U, Matrix b, unsigned *p)
+static Matrix back_sub(Matrix U, Matrix b)
 {
     unsigned n = U.rows;
     Matrix x = init_matrix_man(n, 1);
-    *read_matrix_at(&x, n - 1, 0) = *read_matrix_at(&b, p[n - 1], 0) / *read_matrix_at(&U, n - 1, n - 1);
+    *read_matrix_at(&x, n - 1, 0) = *read_matrix_at(&b, n - 1, 0) / *read_matrix_at(&U, n - 1, n - 1);
     for (int k = n - 2; k >= 0; k--) {
         *read_matrix_at(&x, k, 0) = 0;
         for (unsigned j = k + 1; j < n; j++)
             *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&U, k, j);
 
-        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, p[k], 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&U, k, k);
+        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, k, 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&U, k, k);
     }
     return x;
 }
@@ -164,7 +164,7 @@ Matrix invert_matrix(Matrix A)
     unsigned i, j, n = A.rows;
 
     /* Return if det(A) == 0 */
-    if (det.error || det.f == 0 || result.mat == NULL) {
+    if (det.error || det.f == 0) {
         if (result.mat != NULL)
             free_matrix(&result);
         if (b.mat != NULL)
@@ -174,11 +174,8 @@ Matrix invert_matrix(Matrix A)
     }
 
     struct LU decomp = lu(A);
-    unsigned p_id[n];
-    for (i = 0; i < n; i++) {
-        p_id[i] = i;
+    for (i = 0; i < n; i++)
         b.mat[i] = 0;
-    }
 
     for (i = 0; i < n; i++) {
         b.mat[i] = 1;
@@ -186,7 +183,7 @@ Matrix invert_matrix(Matrix A)
             b.mat[i - 1] = 0;
 
         Matrix d = forward_sub(decomp.L, b, decomp.p);
-        Matrix x = back_sub(decomp.U, d, p_id);
+        Matrix x = back_sub(decomp.U, d);
 
         for (j = 0; j < n; j++)
             *read_matrix_at(&result, j, i) = x.mat[j];
@@ -229,14 +226,10 @@ Matrix solve(Matrix A, Matrix b)
     if (A.rows != b.rows || A.rows != A.cols || b.cols != 1)
         return (Matrix) {0, 0, NULL};
 
-    unsigned p_id[A.rows];
-    for (unsigned i = 0; i < A.rows; i++)
-        p_id[i] = i;
-
     struct LU decomp = lu(A);
 
     b = forward_sub(decomp.L, b, decomp.p);
-    Matrix x = back_sub(decomp.U, b, p_id);
+    Matrix x = back_sub(decomp.U, b);
     GC_push(x.mat, free);
 
     free(b.mat);
