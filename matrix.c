@@ -84,11 +84,11 @@ Matrix add_matrices(Matrix *A, Matrix *B)
 {
     Matrix result = (Matrix) {0, 0, NULL};
 
-    if (A->rows == B->rows && A->cols == B->cols)
+    if (A->rows == B->rows && A->cols == B->cols) {
         result = init_matrix(A->rows, A->cols);
-
-    for (unsigned i = 0; i < result.rows * result.cols; i++)
-        result.mat[i]= A->mat[i] + B->mat[i];
+        for (unsigned i = 0; i < result.rows * result.cols; i++)
+            result.mat[i]= A->mat[i] + B->mat[i];
+    }
 
     return result;
 }
