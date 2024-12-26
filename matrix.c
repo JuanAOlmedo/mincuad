@@ -122,75 +122,72 @@ ResuF determinant(Matrix *A)
     for (unsigned i = 0; i < decomp.n; i++)
         result.f *= *read_matrix_at(&decomp.U, i, i);
 
+    free_matrix(&decomp.L);
+    free_matrix(&decomp.U);
+    GC_remove(decomp.p);
     return result;
 }
 
-static Matrix forward_sub(Matrix L, Matrix b, unsigned *p)
+static void forward_sub(Matrix L, Matrix b, Matrix *x, unsigned *p)
 {
-    Matrix x = init_matrix_man(L.rows, 1);
-    *read_matrix_at(&x, 0, 0) = *read_matrix_at(&b, p[0], 0) / *read_matrix_at(&L, 0, 0);
-    for (unsigned k = 1; k < x.rows; k++) {
-        *read_matrix_at(&x, k, 0) = 0;
+    x->mat[0] = *read_matrix_at(&b, p[0], 0) / *read_matrix_at(&L, 0, 0);
+    for (unsigned k = 1; k < x->rows; k++) {
+        x->mat[k] = 0;
         for (unsigned j = 0; j < k; j++)
-            *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&L, k, j);
+            x->mat[k] += *read_matrix_at(x, j, 0) * *read_matrix_at(&L, k, j);
 
-        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, p[k], 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&L, k, k);
+        x->mat[k] = (b.mat[p[k]] - x->mat[k]) / *read_matrix_at(&L, k, k);
     }
-    return x;
 }
 
-static Matrix back_sub(Matrix U, Matrix b)
+static void back_sub(Matrix U, Matrix b, Matrix *x)
 {
     unsigned n = U.rows;
-    Matrix x = init_matrix_man(n, 1);
-    *read_matrix_at(&x, n - 1, 0) = *read_matrix_at(&b, n - 1, 0) / *read_matrix_at(&U, n - 1, n - 1);
+    x->mat[n - 1] = *read_matrix_at(&b, n - 1, 0) / *read_matrix_at(&U, n - 1, n - 1);
     for (int k = n - 2; k >= 0; k--) {
-        *read_matrix_at(&x, k, 0) = 0;
+        x->mat[k] = 0;
         for (unsigned j = k + 1; j < n; j++)
-            *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&U, k, j);
+            x->mat[k] += *read_matrix_at(x, j, 0) * *read_matrix_at(&U, k, j);
 
-        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, k, 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&U, k, k);
+        x->mat[k] = (b.mat[k] - x->mat[k]) / *read_matrix_at(&U, k, k);
     }
-    return x;
 }
 
 Matrix invert_matrix(Matrix A)
 {
     ResuF det = determinant(&A);
+
+    if (det.error || det.f == 0)
+        return (Matrix) {0, 0, NULL};
+
     Matrix result = init_matrix(A.rows, A.cols),
-           b = init_matrix_man(A.rows, 1);
+           b = init_matrix_man(A.rows, 1),
+           w = init_matrix_man(A.rows, 1),
+           x = init_matrix_man(A.rows, 1);
     unsigned i, j, n = A.rows;
-
-    /* Return if det(A) == 0 */
-    if (det.error || det.f == 0) {
-        if (result.mat != NULL)
-            free_matrix(&result);
-        if (b.mat != NULL)
-            free(b.mat);
-
-        return result;
-    }
 
     struct LU decomp = lu(A);
     for (i = 0; i < n; i++)
         b.mat[i] = 0;
 
     for (i = 0; i < n; i++) {
+        /* b es la columna i-ésima de la identidad */
         b.mat[i] = 1;
         if (i != 0)
             b.mat[i - 1] = 0;
 
-        Matrix d = forward_sub(decomp.L, b, decomp.p);
-        Matrix x = back_sub(decomp.U, d);
+        forward_sub(decomp.L, b, &w, decomp.p);
+        back_sub(decomp.U, w, &x);
 
         for (j = 0; j < n; j++)
             *read_matrix_at(&result, j, i) = x.mat[j];
-        free(d.mat);
-        free(x.mat);
     }
     free_matrix(&decomp.L);
     free_matrix(&decomp.U);
     GC_remove(decomp.p);
+    free(b.mat);
+    free(w.mat);
+    free(x.mat);
 
     return result;
 }
@@ -226,11 +223,12 @@ Matrix solve(Matrix A, Matrix b)
 
     struct LU decomp = lu(A);
 
-    b = forward_sub(decomp.L, b, decomp.p);
-    Matrix x = back_sub(decomp.U, b);
-    GC_push(x.mat, free);
+    Matrix x = init_matrix(b.rows, 1),
+           w = init_matrix_man(b.rows, 1);
+    forward_sub(decomp.L, b, &w, decomp.p);
+    back_sub(decomp.U, w, &x);
 
-    free(b.mat);
+    free(w.mat);
     free_matrix(&decomp.L);
     free_matrix(&decomp.U);
     GC_remove(decomp.p);
