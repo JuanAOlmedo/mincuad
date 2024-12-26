@@ -64,10 +64,11 @@ void transpose_matrix(Matrix *A);
 
 /* Devuelve la inversa de A si existe, error si no o si no hay
  * memoria suficiente */
-Matrix invert_matrix(Matrix *A);
+Matrix invert_matrix(Matrix A);
 
 /* Devuelve la descomposición LU de A */
 struct LU lu(Matrix A);
 
+/* Devuelve la solución del sistema A * x = b */
 Matrix solve(Matrix A, Matrix b);
 #endif

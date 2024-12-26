@@ -95,6 +95,7 @@ Matrix add_matrices(Matrix *A, Matrix *B)
     return result;
 }
 
+/* Devuelve el signo de la permutación p */
 static int sgnp(unsigned *p, unsigned n)
 {
     int s = 1;
@@ -107,21 +108,6 @@ static int sgnp(unsigned *p, unsigned n)
                     p[j] -= 1;
     }
     return s;
-}
-
-/* Devuelve en B la Matriz A sin la columna col ni la fila row.
- * Se asume que B está bien inicializada */
-static void cofactor_matrix_of(Matrix *A, unsigned row, unsigned col, Matrix *B)
-{
-    double *matB = B->mat;
-    double *matA = A->mat;
-
-    while (matB - B->mat < B->rows * B->cols)
-        /* Si matA apunta a la fila row o a la columna col */
-        if ((matA - A->mat) % A->cols == col || (matA - A->mat) / A->cols == row)
-            matA++; /* No copiar la entrada a B */
-        else
-            *(matB++) = *(matA++); /* Si no, copiar la entrada a B */
 }
 
 ResuF determinant(Matrix *A)
@@ -141,39 +127,76 @@ ResuF determinant(Matrix *A)
     return result;
 }
 
-Matrix invert_matrix(Matrix *A)
+static Matrix forward_sub(Matrix L, Matrix b, unsigned *p)
 {
-    ResuF detA = determinant(A), detTemp;
-    Matrix result = init_matrix(A->rows, A->cols),
-           tempMat = init_matrix_man(A->rows - 1, A->cols - 1);
-    unsigned i, j;
+    Matrix x = init_matrix_man(L.rows, 1);
+    *read_matrix_at(&x, 0, 0) = *read_matrix_at(&b, p[0], 0) / *read_matrix_at(&L, 0, 0);
+    for (unsigned k = 1; k < x.rows; k++) {
+        *read_matrix_at(&x, k, 0) = 0;
+        for (unsigned j = 0; j < k; j++)
+            *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&L, k, j);
+
+        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, p[k], 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&L, k, k);
+    }
+    return x;
+}
+
+static Matrix back_sub(Matrix U, Matrix b, unsigned *p)
+{
+    unsigned n = U.rows;
+    Matrix x = init_matrix_man(n, 1);
+    *read_matrix_at(&x, n - 1, 0) = *read_matrix_at(&b, p[n - 1], 0) / *read_matrix_at(&U, n - 1, n - 1);
+    for (int k = n - 2; k >= 0; k--) {
+        *read_matrix_at(&x, k, 0) = 0;
+        for (unsigned j = k + 1; j < n; j++)
+            *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&U, k, j);
+
+        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, p[k], 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&U, k, k);
+    }
+    return x;
+}
+
+Matrix invert_matrix(Matrix A)
+{
+    ResuF det = determinant(&A);
+    Matrix result = init_matrix(A.rows, A.cols),
+           b = init_matrix_man(A.rows, 1);
+    unsigned i, j, n = A.rows;
 
     /* Return if det(A) == 0 */
-    if (detA.error || detA.f == 0 || result.mat == NULL || tempMat.mat == NULL) {
-        if (tempMat.mat != NULL)
-            free(tempMat.mat);
+    if (det.error || det.f == 0 || result.mat == NULL) {
         if (result.mat != NULL)
             free_matrix(&result);
+        if (b.mat != NULL)
+            free(b.mat);
 
         return result;
     }
 
-    for (i = 0; i < A->rows; i++)
-        for (j = 0; j < A->cols; j++) {
-            cofactor_matrix_of(A, j, i, &tempMat);
-            detTemp = determinant(&tempMat);
+    struct LU decomp = lu(A);
+    unsigned p_id[n];
+    for (i = 0; i < n; i++) {
+        p_id[i] = i;
+        b.mat[i] = 0;
+    }
 
-            if (detTemp.error) {
-                free_matrix(&result);
-                free(tempMat.mat);
-                return result;
-            }
+    for (i = 0; i < n; i++) {
+        b.mat[i] = 1;
+        if (i != 0)
+            b.mat[i - 1] = 0;
 
-            *read_matrix_at(&result, i, j) =
-                (((i + j) % 2 == 0) ? 1 : -1) * detTemp.f / detA.f;
-        }
+        Matrix d = forward_sub(decomp.L, b, decomp.p);
+        Matrix x = back_sub(decomp.U, d, p_id);
 
-    free(tempMat.mat);
+        for (j = 0; j < n; j++)
+            *read_matrix_at(&result, j, i) = x.mat[j];
+        free(d.mat);
+        free(x.mat);
+    }
+    free_matrix(&decomp.L);
+    free_matrix(&decomp.U);
+    GC_remove(decomp.p);
+
     return result;
 }
 
@@ -201,50 +224,22 @@ static void permute_rows(Matrix *A, unsigned *p)
     }
 }
 
-static Matrix forward_sub(Matrix L, Matrix b)
-{
-    Matrix x = init_matrix(L.rows, 1);
-    *read_matrix_at(&x, 0, 0) = *read_matrix_at(&b, 0, 0) / *read_matrix_at(&L, 0, 0);
-    for (unsigned k = 1; k < x.rows; k++) {
-        *read_matrix_at(&x, k, 0) = 0;
-        for (unsigned j = 0; j < k; j++)
-            *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&L, k, j);
-
-        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, k, 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&L, k, k);
-    }
-    return x;
-}
-
-static Matrix back_sub(Matrix U, Matrix b)
-{
-    unsigned n = U.rows;
-    Matrix x = init_matrix(n, 1);
-    *read_matrix_at(&x, n - 1, 0) = *read_matrix_at(&b, n - 1, 0) / *read_matrix_at(&U, n - 1, n - 1);
-    for (int k = n - 2; k >= 0; k--) {
-        *read_matrix_at(&x, k, 0) = 0;
-        for (unsigned j = k + 1; j < n; j++)
-            *read_matrix_at(&x, k, 0) += *read_matrix_at(&x, j, 0) * *read_matrix_at(&U, k, j);
-
-        *read_matrix_at(&x, k, 0) = (*read_matrix_at(&b, k, 0) - *read_matrix_at(&x, k, 0)) / *read_matrix_at(&U, k, k);
-    }
-    return x;
-}
-
 Matrix solve(Matrix A, Matrix b)
 {
-    b = copy_matrix(b);
-    unsigned i, j;
-
     if (A.rows != b.rows || A.rows != A.cols || b.cols != 1)
         return (Matrix) {0, 0, NULL};
 
+    unsigned p_id[A.rows];
+    for (unsigned i = 0; i < A.rows; i++)
+        p_id[i] = i;
+
     struct LU decomp = lu(A);
-    permute_rows(&b, decomp.p);
-    Matrix x = forward_sub(decomp.L, b);
-    free_matrix(&b);
-    b = x;
-    x = back_sub(decomp.U, b);
-    free_matrix(&b);
+
+    b = forward_sub(decomp.L, b, decomp.p);
+    Matrix x = back_sub(decomp.U, b, p_id);
+    GC_push(x.mat, free);
+
+    free(b.mat);
     free_matrix(&decomp.L);
     free_matrix(&decomp.U);
     GC_remove(decomp.p);
