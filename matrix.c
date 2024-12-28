@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define pointer_to(A, row, col) ((A).mat + row * (A).cols + col)
+#define pointer_to(A, row, col) ((A).mat + (row) * (A).cols + col)
 
 static struct LU lu_man(Matrix A);
 
@@ -333,26 +333,30 @@ static struct LU lu_man(Matrix A)
 {
     Matrix U = copy_man(A);
     unsigned n = A.rows,
-             *p = malloc(sizeof(unsigned) * n);
+             *p = malloc(sizeof(unsigned) * n),
+             *p_inv = malloc(sizeof(unsigned) * n);
 
     for (unsigned i = 0; i < n; i++)
-        p[i] = i;
+        p[i] = p_inv[i] = i;
 
     for (unsigned k = 0; k < n - 1; k++) {
-        swap(p, max_col(U, p, k), k);
+        unsigned m = max_col(U, p, k);
 
-        double diag = *pointer_to(U, p[k], k);
+        double diag = *pointer_to(U, p[m], k);
         if (diag != 0) {
+            swap(p_inv, p[m], p[k]);
+            swap(p, m, k);
+            diag = *pointer_to(U, p[k], k);
+
             for (unsigned i = k + 1; i < n; i++) {
                 double *multiplier = pointer_to(U, p[i], k);
                 *multiplier /= diag;
-                for (unsigned j = k + 1; j < n; j++) {
+                for (unsigned j = k + 1; j < n; j++)
                     *pointer_to(U, p[i], j) -= *multiplier * *pointer_to(U, p[k], j);
-                }
             }
         }
     }
-    permute_rows(&U, p);
+    permute_rows(&U, p_inv);
     Matrix L = copy_man(U);
     for (unsigned i = 0; i < n; i++) {
         *pointer_to(L, i, i) = 1;
@@ -361,6 +365,7 @@ static struct LU lu_man(Matrix A)
             *pointer_to(U, j, i) = 0;
         }
     }
+    free(p_inv);
 
     return (struct LU) {L, U, p, n};
 }
