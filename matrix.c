@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define pointer_to(A, row, col) ((A).mat + row * (A).cols + col)
+
 /* Equivalente a matrix_new, solo que la matriz resultante no
  * va a ser guardada para ser liberada más tarde */
 static Matrix new_man(unsigned rows, unsigned cols)
@@ -34,11 +36,6 @@ Matrix matrix_copy(Matrix A)
     return B;
 }
 
-static double *pointer_to(Matrix *A, unsigned row, unsigned col)
-{
-    return A->mat + row * A->cols + col;
-}
-
 double matrix_read(Matrix A, unsigned row, unsigned col)
 {
     if (row < A.rows && col < A.cols)
@@ -58,7 +55,7 @@ double *matrix_col(Matrix A, unsigned col)
     if (col < A.cols) {
         double *col_arr = malloc(sizeof(double) * A.rows);
         for (unsigned i = 0; i < A.rows; i++)
-            col_arr[i] = *pointer_to(&A, i, col);
+            col_arr[i] = *pointer_to(A, i, col);
 
         return col_arr;
     }
@@ -70,7 +67,7 @@ double *matrix_row(Matrix A, unsigned row)
 {
     if (row < A.rows) {
         double *row_arr = malloc(sizeof(double) * A.cols);
-        memcpy(row_arr, pointer_to(&A, row, 0), sizeof(double) * A.cols);
+        memcpy(row_arr, pointer_to(A, row, 0), sizeof(double) * A.cols);
 
         return row_arr;
     }
@@ -109,7 +106,7 @@ Matrix matrix_multiply(Matrix A, Matrix B)
     for (i = 0; i < result.rows; i++)
         for (j = 0; j < result.cols; j++, result_i_j++)
             for (*result_i_j = k = 0; k < A.cols; k++)
-                *result_i_j += *pointer_to(&A, i, k) * *pointer_to(&B, k, j);
+                *result_i_j += *pointer_to(A, i, k) * *pointer_to(B, k, j);
 
     return result;
 }
@@ -133,7 +130,7 @@ void matrix_print(Matrix A)
 
     for (i = 0; i < A.rows; i++) {
         for (j = 0; j < A.cols; j++)
-            printf("%10.5f ", *pointer_to(&A, i, j));
+            printf("%10.5f ", *pointer_to(A, i, j));
 
         putchar('\n');
     }
@@ -169,7 +166,7 @@ double matrix_det(Matrix A)
     double result = sgnp(decomp.p, decomp.n);
 
     for (unsigned i = 0; i < decomp.n; i++)
-        result *= *pointer_to(&decomp.U, i, i);
+        result *= *pointer_to(decomp.U, i, i);
 
     matrix_free(&decomp.L);
     matrix_free(&decomp.U);
@@ -179,32 +176,32 @@ double matrix_det(Matrix A)
 
 static void forward_sub(Matrix L, Matrix b, Matrix *x, unsigned *p)
 {
-    x->mat[0] = *pointer_to(&b, p[0], 0) / *pointer_to(&L, 0, 0);
+    x->mat[0] = *pointer_to(b, p[0], 0) / *pointer_to(L, 0, 0);
     for (unsigned k = 1; k < x->rows; k++) {
         x->mat[k] = 0;
         for (unsigned j = 0; j < k; j++)
-            x->mat[k] += *pointer_to(x, j, 0) * *pointer_to(&L, k, j);
+            x->mat[k] += *pointer_to(*x, j, 0) * *pointer_to(L, k, j);
 
-        x->mat[k] = (b.mat[p[k]] - x->mat[k]) / *pointer_to(&L, k, k);
+        x->mat[k] = (b.mat[p[k]] - x->mat[k]) / *pointer_to(L, k, k);
     }
 }
 
 static void back_sub(Matrix U, Matrix b, Matrix *x)
 {
     unsigned n = U.rows;
-    x->mat[n - 1] = *pointer_to(&b, n - 1, 0) / *pointer_to(&U, n - 1, n - 1);
+    x->mat[n - 1] = *pointer_to(b, n - 1, 0) / *pointer_to(U, n - 1, n - 1);
     for (int k = n - 2; k >= 0; k--) {
         x->mat[k] = 0;
         for (unsigned j = k + 1; j < n; j++)
-            x->mat[k] += *pointer_to(x, j, 0) * *pointer_to(&U, k, j);
+            x->mat[k] += *pointer_to(*x, j, 0) * *pointer_to(U, k, j);
 
-        x->mat[k] = (b.mat[k] - x->mat[k]) / *pointer_to(&U, k, k);
+        x->mat[k] = (b.mat[k] - x->mat[k]) / *pointer_to(U, k, k);
     }
 }
 
 Matrix matrix_inv(Matrix A)
 {
-    if (matrix_det(A)== 0)
+    if (matrix_det(A) == 0)
         return (Matrix) {0, 0, NULL};
 
     Matrix result = matrix_new(A.rows, A.cols),
@@ -227,7 +224,7 @@ Matrix matrix_inv(Matrix A)
         back_sub(decomp.U, w, &x);
 
         for (j = 0; j < n; j++)
-            *pointer_to(&result, j, i) = x.mat[j];
+            *pointer_to(result, j, i) = x.mat[j];
     }
     matrix_free(&decomp.L);
     matrix_free(&decomp.U);
@@ -255,9 +252,9 @@ static void permute_rows(Matrix *A, unsigned *p)
     double aux[m];
     for (unsigned i = 0; i < n; i++) {
         if (q[i] != i) {
-            memcpy(aux, pointer_to(A, i, 0), sizeof(double) * m);
-            memcpy(pointer_to(A, i, 0), pointer_to(A, p[i], 0), sizeof(double) * m);
-            memcpy(pointer_to(A, p[i], 0), aux, sizeof(double) * m);
+            memcpy(aux, pointer_to(*A, i, 0), sizeof(double) * m);
+            memcpy(pointer_to(*A, i, 0), pointer_to(*A, p[i], 0), sizeof(double) * m);
+            memcpy(pointer_to(*A, p[i], 0), aux, sizeof(double) * m);
             swap(q, i, q[i]);
         }
     }
@@ -289,7 +286,7 @@ Matrix matrix_transpose_of(Matrix A)
 
     for (unsigned i = 0; i < A_t.rows; i++)
         for (unsigned j = 0; j < A_t.cols; j++)
-            *pointer_to(&A_t, i, j) = *pointer_to(&A, j, i);
+            *pointer_to(A_t, i, j) = *pointer_to(A, j, i);
 
     return A_t;
 }
@@ -301,20 +298,20 @@ void matrix_transpose(Matrix *A)
 
     for (i = 0; i < A->rows; i++)
         for (j = i + 1; j < A->cols; j++) {
-            aux = *pointer_to(A, i, j);
-            *pointer_to(A, i, j) = *pointer_to(A, j, i);
-            *pointer_to(A, j, i) = aux;
+            aux = *pointer_to(*A, i, j);
+            *pointer_to(*A, i, j) = *pointer_to(*A, j, i);
+            *pointer_to(*A, j, i) = aux;
         }
 }
 
 static unsigned max_col(Matrix A, unsigned *p, unsigned col)
 {
-    double max = fabs(*pointer_to(&A, p[col], col));
+    double max = fabs(*pointer_to(A, p[col], col));
     unsigned max_i = col;
 
     for (unsigned i = col + 1; i < A.rows; i++)
-        if (fabs(*pointer_to(&A, p[i], col)) > max) {
-            max = fabs(*pointer_to(&A, p[i], col));
+        if (fabs(*pointer_to(A, p[i], col)) > max) {
+            max = fabs(*pointer_to(A, p[i], col));
             max_i = i;
         }
 
@@ -335,13 +332,13 @@ struct LU matrix_lu(Matrix A)
     for (unsigned k = 0; k < n - 1; k++) {
         swap(p, max_col(U, p, k), k);
 
-        double diag = *pointer_to(&U, p[k], k);
+        double diag = *pointer_to(U, p[k], k);
         if (diag != 0) {
             for (unsigned i = k + 1; i < n; i++) {
-                double *multiplier = pointer_to(&U, p[i], k);
+                double *multiplier = pointer_to(U, p[i], k);
                 *multiplier /= diag;
                 for (unsigned j = k + 1; j < n; j++) {
-                    *pointer_to(&U, p[i], j) -= *multiplier * *pointer_to(&U, p[k], j);
+                    *pointer_to(U, p[i], j) -= *multiplier * *pointer_to(U, p[k], j);
                 }
             }
         }
@@ -349,10 +346,10 @@ struct LU matrix_lu(Matrix A)
     permute_rows(&U, p);
     Matrix L = matrix_copy(U);
     for (unsigned i = 0; i < n; i++) {
-        *pointer_to(&L, i, i) = 1;
+        *pointer_to(L, i, i) = 1;
         for (unsigned j = i + 1; j < n; j++) {
-            *pointer_to(&L, i, j) = 0;
-            *pointer_to(&U, j, i) = 0;
+            *pointer_to(L, i, j) = 0;
+            *pointer_to(U, j, i) = 0;
         }
     }
     return (struct LU) {L, U, p, n};
