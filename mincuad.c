@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <math.h>
 #include "include/matrix.h"
 #include "include/gc.h"
@@ -24,42 +23,29 @@ int main()
         printf("INFO: Tomando un polinomio del grado del tamaño de la lista");
     }
 
-    A = init_matrix(rows, cols);
-    Y = init_matrix(rows, 1);
-
-    if (A.mat == NULL || Y.mat == NULL)
-        exit_and_explain();
+    A = matrix_new(rows, cols);
+    Y = matrix_new(rows, 1);
 
     for (i = 0; i < rows; i++) {
         scanf("%f %f", &x, &y);
 
-        *read_matrix_at(&Y, i, 0) = y;
+        matrix_write(&Y, i, 0, y);
         for (j = 0; j < cols; j++)
-            *read_matrix_at(&A, i, j) =(double) powf(x, (float) cols - j - 1);
+            matrix_write(&A, i, j, (double) powf(x, (float) cols - j - 1));
     }
 
-    A_transpose = transpose_matrix_of(A);
-    if (A_transpose.mat == NULL)
-        exit_and_explain();
-
-    coefmat = multiply_matrices(&A_transpose, &A);
-    A_t_Y = multiply_matrices(&A_transpose, &Y);
-
-    if (coefmat.mat == NULL || A_t_Y.mat == NULL)
-        exit_and_explain();
-
-    X = solve(coefmat, A_t_Y);
-
-    if (X.mat == NULL)
-        exit_and_explain();
+    A_transpose = matrix_transpose_of(A);
+    coefmat = matrix_multiply(A_transpose, A);
+    A_t_Y = matrix_multiply(A_transpose, Y);
+    X = matrix_system_solve(coefmat, A_t_Y);
 
     puts("El polinomio que mejor aproxima la lista de datos es:");
     for (i = 0; i < X.rows; i++) {
-        printf((*read_matrix_at(&X, i, 0) >= 0) ? "+ " : "- ");
+        printf((matrix_read(X, i, 0) >= 0) ? "+ " : "- ");
         if (i < X.rows - 1)
-            printf("%1.4f * x^%d ", fabs(*read_matrix_at(&X, i, 0)), X.rows - i - 1);
+            printf("%1.4f * x^%d ", fabs(matrix_read(X, i, 0)), X.rows - i - 1);
         else
-            printf("%1.4f\n", fabs(*read_matrix_at(&X, i, 0)));
+            printf("%1.4f\n", fabs(matrix_read(X, i, 0)));
     }
 
     return 0;

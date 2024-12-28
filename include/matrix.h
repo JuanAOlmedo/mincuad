@@ -6,69 +6,68 @@ typedef struct {
    double *mat;
 } Matrix;
 
-typedef struct {
-    double f;
-    short error;
-} ResuF;
-
 struct LU {
     Matrix L, U;
     unsigned *p, n;
 };
 
-/* Devuelve un Matrix que contiene la matriz de tamaño rows x cols.
- * Si no hay memoria suficiente, devuelve en estado de error. */
-Matrix init_matrix(unsigned rows, unsigned cols);
+/* Devuelve un Matrix que contiene la matriz de tamaño rows x cols. */
+Matrix matrix_new(unsigned rows, unsigned cols);
+
+/* Devuelve 0 cuando la matriz no es válida */
+int matrix_is_valid(Matrix A);
 
 /* Devuelve una copia de A */
-Matrix copy_matrix(Matrix A);
+Matrix matrix_copy(Matrix A);
 
-/* Devuelve M[row, col] */
-double *read_matrix_at(Matrix *M, unsigned row, unsigned col);
+/* Devuelve A[row, col] */
+double matrix_read(Matrix A, unsigned row, unsigned col);
 
-/* Equivalente a read_matrix_at(M, 0, col) */
-double *col(Matrix *M, unsigned col);
+/* Escribe x en A[row, col] */
+void matrix_write(Matrix *A, unsigned row, unsigned col, float x);
 
-/* Equivalente a read_matrix_at(M, row, 0) */
-double *row(Matrix *M, unsigned row);
+/* Devuelve un arreglo con la columna n-ésima de A */
+double *matrix_col(Matrix A, unsigned col);
 
-/* Libera el puntero a la matriz */
-void free_matrix(Matrix *M);
+/* Devuelve un arreglo con la fila n-ésima de A */
+double *matrix_row(Matrix A, unsigned row);
 
-/* Devuelve A * x. Devuelve en estado de error si no hay memoria
- * disponible */
-Matrix multiply_matrix(Matrix *A, double x);
+/* Libera la memoria asignada a la matriz A */
+void matrix_free(Matrix *A);
 
-/* Devuelve A * B. Devuelve en estado de error si las matrices son
- * no conformantes o si no hay memoria disponible */
-Matrix multiply_matrices(Matrix *A, Matrix *B);
+/* Devuelve A * x */
+Matrix matrix_smultiply(Matrix A, double x);
 
-/* Devuelve A + B. Devuelve en estado de error si las matrices son
- * no conformantes o si no hay memoria disponible */
-Matrix add_matrices(Matrix *A, Matrix *B);
+/* Devuelve A * B. Devuelve una matriz inválida si las matrices son
+ * no conformantes */
+Matrix matrix_multiply(Matrix A, Matrix B);
 
-/* Imprime A */
-void print_matrix(Matrix *A);
+/* Devuelve A + B. Devuelve una matriz inválida si las matrices son
+ * no conformantes */
+Matrix matrix_add(Matrix A, Matrix B);
+
+/* Imprime A a la salida estándar */
+void matrix_print(Matrix A);
 
 /* Lee A de la entrada estándar */
-void get_matrix(Matrix *A);
+void matrix_get(Matrix *A);
 
-/* Devuelve det(A), error si la matrix no es cuadrada */
-ResuF determinant(Matrix *A);
+/* Devuelve det(A) si la matriz es cuadrada. Si no, devuelve 0 */
+double matrix_det(Matrix A);
 
 /* Devuelve la transpuesta de A */
-Matrix transpose_matrix_of(Matrix A);
+Matrix matrix_transpose_of(Matrix A);
 
-/* Escribe en A su transpuesta */
-void transpose_matrix(Matrix *A);
+/* Transpone A */
+void matrix_transpose(Matrix *A);
 
-/* Devuelve la inversa de A si existe, error si no o si no hay
- * memoria suficiente */
-Matrix invert_matrix(Matrix A);
+/* Devuelve la inversa de A si existe, un matriz inválida si no */
+Matrix matrix_inv(Matrix A);
 
 /* Devuelve la descomposición LU de A */
-struct LU lu(Matrix A);
+struct LU matrix_lu(Matrix A);
 
 /* Devuelve la solución del sistema A * x = b */
-Matrix solve(Matrix A, Matrix b);
+Matrix matrix_system_solve(Matrix A, Matrix b);
+
 #endif

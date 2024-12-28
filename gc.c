@@ -1,7 +1,5 @@
 #include "include/gc.h"
 
-/* Acumula todas las variables definidas en una lista
- * para ser liberadas al final del programa */
 struct variable_list {
     struct variable_list *nxt;
     void *var;
