@@ -39,7 +39,7 @@ Matrix matrix_copy(Matrix A)
 double matrix_read(Matrix A, unsigned row, unsigned col)
 {
     if (row < A.rows && col < A.cols)
-        return *(A.mat + row * A.cols + col);
+        return *pointer_to(A, row, col);
 
     return 0;
 }
@@ -47,7 +47,7 @@ double matrix_read(Matrix A, unsigned row, unsigned col)
 void matrix_write(Matrix *A, unsigned row, unsigned col, float x)
 {
     if (row < A->rows && col < A->cols)
-        *(A->mat + row * A->cols + col) = x;
+        *pointer_to(*A, row, col) = x;
 }
 
 double *matrix_col(Matrix A, unsigned col)
