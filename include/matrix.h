@@ -70,4 +70,9 @@ struct LU matrix_lu(Matrix A);
 /* Devuelve la solución del sistema A * x = b */
 Matrix matrix_system_solve(Matrix A, Matrix b);
 
+/* Devuelve la matriz de Vandermonde asociada al vector b */
+Matrix matrix_vander(Matrix b, unsigned cols);
+
+/* Devuelve la identidad de tamaño n */
+Matrix matrix_eye(unsigned n);
 #endif

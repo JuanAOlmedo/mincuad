@@ -8,9 +8,8 @@ void exit_and_explain(void);
 
 int main()
 {
-    Matrix A, A_transpose, coefmat, coefmat_inverse, Y, A_t_Y, X;
-    int rows, cols, i, j;
-    float x, y;
+    Matrix A, A_t, A_t_A, T, Y, A_t_Y, X;
+    int rows, cols;
     atexit(GC_empty);
 
     printf("Ingrese grado de polinomio: ");
@@ -23,30 +22,34 @@ int main()
         printf("INFO: Tomando un polinomio del grado del tamaño de la lista");
     }
 
-    A = matrix_new(rows, cols);
+    T = matrix_new(rows, 1);
     Y = matrix_new(rows, 1);
 
-    for (i = 0; i < rows; i++) {
-        scanf("%f %f", &x, &y);
+    matrix_get(&T);
+    matrix_get(&Y);
 
-        matrix_write(&Y, i, 0, y);
-        for (j = 0; j < cols; j++)
-            matrix_write(&A, i, j, (double) powf(x, (float) cols - j - 1));
-    }
+    A = matrix_vander(T, cols);
 
-    A_transpose = matrix_transpose_of(A);
-    coefmat = matrix_multiply(A_transpose, A);
-    A_t_Y = matrix_multiply(A_transpose, Y);
-    X = matrix_system_solve(coefmat, A_t_Y);
+    A_t = matrix_transpose_of(A);
+    A_t_A = matrix_multiply(A_t, A);
+    A_t_Y = matrix_multiply(A_t, Y);
+    X = matrix_system_solve(A_t_A, A_t_Y);
 
     puts("El polinomio que mejor aproxima la lista de datos es:");
-    for (i = 0; i < X.rows; i++) {
+    for (unsigned i = 0; i < X.rows; i++) {
         printf((matrix_read(X, i, 0) >= 0) ? "+ " : "- ");
         if (i < X.rows - 1)
             printf("%1.4f * x^%d ", fabs(matrix_read(X, i, 0)), X.rows - i - 1);
         else
             printf("%1.4f\n", fabs(matrix_read(X, i, 0)));
     }
+    matrix_free(&A);
+    matrix_free(&T);
+    matrix_free(&Y);
+    matrix_free(&X);
+    matrix_free(&A_t);
+    matrix_free(&A_t_Y);
+    matrix_free(&A_t_A);
 
     return 0;
 }

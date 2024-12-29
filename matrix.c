@@ -309,7 +309,7 @@ static unsigned max_col(Matrix A, unsigned *p, unsigned col)
     return max_i;
 }
 
-static struct LU lu_man(Matrix A)
+struct LU matrix_lu(Matrix A)
 {
     Matrix U = matrix_copy(A);
     unsigned n = A.rows,
@@ -348,4 +348,28 @@ static struct LU lu_man(Matrix A)
     free(p_inv);
 
     return (struct LU) {L, U, p, n};
+}
+
+Matrix matrix_vander(Matrix b, unsigned cols)
+{
+    if (b.cols != 1)
+        return (Matrix) {0, 0, NULL};
+
+    Matrix result = matrix_new(b.rows, cols);
+
+    for (unsigned i = 0; i < b.rows; i++)
+        for (unsigned j = 0; j < cols; j++)
+            *pointer_to(result, i, j) = (double) powf(b.mat[i], (float) cols - j - 1);
+
+    return result;
+}
+
+Matrix matrix_eye(unsigned n)
+{
+    Matrix eye = matrix_new(n, n);
+    for (unsigned i = 0; i < n; i++)
+        for (unsigned j = 0; j < n; j++)
+            *pointer_to(eye, i, j) = (i == j) ? 1 : 0;
+
+    return eye;
 }
