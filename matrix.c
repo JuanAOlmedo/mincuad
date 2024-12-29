@@ -1,5 +1,4 @@
 #include "include/matrix.h"
-#include "include/gc.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,19 +6,9 @@
 
 #define pointer_to(A, row, col) ((A).mat + (row) * (A).cols + col)
 
-static struct LU lu_man(Matrix A);
-
-/* Equivalente a matrix_new, solo que la matriz resultante no
- * va a ser guardada para ser liberada más tarde */
-static Matrix new_man(unsigned rows, unsigned cols)
-{
-    return (Matrix) {rows, cols, malloc(sizeof(double) * rows * cols)};
-}
-
 Matrix matrix_new(unsigned rows, unsigned cols)
 {
-    Matrix result = new_man(rows, cols);
-    GC_push(result.mat, free);
+    Matrix result = (Matrix) {rows, cols, malloc(sizeof(double) * rows * cols)};
 
     return result;
 }
@@ -29,20 +18,11 @@ int matrix_is_valid(Matrix A)
     return A.mat == NULL;
 }
 
-Matrix copy_man(Matrix A)
-{
-    Matrix B = new_man(A.rows, A.cols);
-
-    memcpy(B.mat, A.mat, A.cols * A.rows * sizeof(double));
-
-    return B;
-}
-
 Matrix matrix_copy(Matrix A)
 {
-    Matrix B = copy_man(A);
+    Matrix B = matrix_new(A.rows, A.cols);
 
-    GC_push(B.mat, free);
+    memcpy(B.mat, A.mat, A.cols * A.rows * sizeof(double));
 
     return B;
 }
@@ -88,7 +68,7 @@ double *matrix_row(Matrix A, unsigned row)
 
 void matrix_free(Matrix *A)
 {
-    GC_remove(A->mat);
+    free(A->mat);
     A->mat = NULL;
 }
 
@@ -173,14 +153,14 @@ double matrix_det(Matrix A)
     if (A.rows != A.cols)
         return 0;
 
-    struct LU decomp = lu_man(A);
+    struct LU decomp = matrix_lu(A);
     double result = sgnp(decomp.p, decomp.n);
 
     for (unsigned i = 0; i < decomp.n; i++)
         result *= *pointer_to(decomp.U, i, i);
 
-    free(decomp.L.mat);
-    free(decomp.U.mat);
+    matrix_free(&decomp.L);
+    matrix_free(&decomp.U);
     free(decomp.p);
     return result;
 }
@@ -216,12 +196,12 @@ Matrix matrix_inv(Matrix A)
         return (Matrix) {0, 0, NULL};
 
     Matrix result = matrix_new(A.rows, A.cols),
-           b = new_man(A.rows, 1),
-           w = new_man(A.rows, 1),
-           x = new_man(A.rows, 1);
+           b = matrix_new(A.rows, 1),
+           w = matrix_new(A.rows, 1),
+           x = matrix_new(A.rows, 1);
     unsigned i, j, n = A.rows;
 
-    struct LU decomp = lu_man(A);
+    struct LU decomp = matrix_lu(A);
     for (i = 0; i < n; i++)
         b.mat[i] = 0;
 
@@ -237,12 +217,12 @@ Matrix matrix_inv(Matrix A)
         for (j = 0; j < n; j++)
             *pointer_to(result, j, i) = x.mat[j];
     }
-    free(decomp.L.mat);
-    free(decomp.U.mat);
+    matrix_free(&decomp.L);
+    matrix_free(&decomp.U);
     free(decomp.p);
-    free(b.mat);
-    free(w.mat);
-    free(x.mat);
+    matrix_free(&b);
+    matrix_free(&w);
+    matrix_free(&x);
 
     return result;
 }
@@ -276,17 +256,17 @@ Matrix matrix_system_solve(Matrix A, Matrix b)
     if (A.rows != b.rows || A.rows != A.cols || b.cols != 1)
         return (Matrix) {0, 0, NULL};
 
-    struct LU decomp = lu_man(A);
+    struct LU decomp = matrix_lu(A);
 
     Matrix x = matrix_new(b.rows, 1),
-           w = new_man(b.rows, 1);
+           w = matrix_new(b.rows, 1);
     forward_sub(decomp.L, b, &w, decomp.p);
     back_sub(decomp.U, w, &x);
 
-    free(decomp.L.mat);
-    free(decomp.U.mat);
+    matrix_free(&decomp.L);
+    matrix_free(&decomp.U);
     free(decomp.p);
-    free(w.mat);
+    matrix_free(&w);
 
     return x;
 }
@@ -331,7 +311,7 @@ static unsigned max_col(Matrix A, unsigned *p, unsigned col)
 
 static struct LU lu_man(Matrix A)
 {
-    Matrix U = copy_man(A);
+    Matrix U = matrix_copy(A);
     unsigned n = A.rows,
              *p = malloc(sizeof(unsigned) * n),
              *p_inv = malloc(sizeof(unsigned) * n);
@@ -357,7 +337,7 @@ static struct LU lu_man(Matrix A)
         }
     }
     permute_rows(&U, p_inv);
-    Matrix L = copy_man(U);
+    Matrix L = matrix_copy(U);
     for (unsigned i = 0; i < n; i++) {
         *pointer_to(L, i, i) = 1;
         for (unsigned j = i + 1; j < n; j++) {
@@ -368,15 +348,4 @@ static struct LU lu_man(Matrix A)
     free(p_inv);
 
     return (struct LU) {L, U, p, n};
-}
-
-struct LU matrix_lu(Matrix A)
-{
-    struct LU decomp = lu_man(A);
-
-    GC_push(decomp.L.mat, free);
-    GC_push(decomp.U.mat, free);
-    GC_push(decomp.p, free);
-
-    return decomp;
 }
