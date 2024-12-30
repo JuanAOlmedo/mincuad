@@ -406,6 +406,7 @@ Matrix matrix_householder(Matrix u)
 Matrix matrix_ls_solve(Matrix A, Matrix b)
 {
     unsigned m = A.rows, n = A.cols;
+    unsigned p[n];
     Matrix u = matrix_new(m, 1), H_m = matrix_new(m, m), H;
     double *u_mat = u.mat;
     A = matrix_copy(A);
@@ -436,13 +437,15 @@ Matrix matrix_ls_solve(Matrix A, Matrix b)
         u.mat++;
         u.rows--;
         matrix_free(&H);
+        p[k] = k;
     }
     u.mat = u_mat;
     matrix_free(&u);
     matrix_free(&H_m);
     A.rows = n;
     b.rows = n;
-    Matrix x = matrix_system_solve(A, b);
+    Matrix x = matrix_new(n, 1);
+    forward_sub(A, b, &x, p);
     matrix_free(&b);
     matrix_free(&A);
 
