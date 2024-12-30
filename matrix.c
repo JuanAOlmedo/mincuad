@@ -41,29 +41,27 @@ void matrix_write(Matrix *A, unsigned row, unsigned col, float x)
         *pointer_to(*A, row, col) = x;
 }
 
-double *matrix_col(Matrix A, unsigned col)
+Matrix matrix_col(Matrix A, unsigned col)
 {
-    if (col < A.cols) {
-        double *col_arr = malloc(sizeof(double) * A.rows);
-        for (unsigned i = 0; i < A.rows; i++)
-            col_arr[i] = *pointer_to(A, i, col);
+    if (col >= A.cols)
+        return (Matrix) {0, 0, NULL};
 
-        return col_arr;
-    }
+    Matrix col_mat = matrix_new(1, A.cols);
+    for (unsigned i = 0; i < A.rows; i++)
+        col_mat.mat[i] = *pointer_to(A, i, col);
 
-    return NULL;
+    return col_mat;
 }
 
-double *matrix_row(Matrix A, unsigned row)
+Matrix matrix_row(Matrix A, unsigned row)
 {
-    if (row < A.rows) {
-        double *row_arr = malloc(sizeof(double) * A.cols);
-        memcpy(row_arr, pointer_to(A, row, 0), sizeof(double) * A.cols);
+    if (row >= A.rows)
+        return (Matrix) {0, 0, NULL};
 
-        return row_arr;
-    }
+    Matrix row_mat = matrix_new(A.rows, 1);
+    memcpy(row_mat.mat, pointer_to(A, row, 0), sizeof(double) * A.cols);
 
-    return NULL;
+    return row_mat;
 }
 
 void matrix_free(Matrix *A)
@@ -372,4 +370,81 @@ Matrix matrix_eye(unsigned n)
             *pointer_to(eye, i, j) = (i == j) ? 1 : 0;
 
     return eye;
+}
+
+double norm_2(Matrix u)
+{
+    double result = 0;
+    unsigned n = (u.cols == 1) ? u.rows : u.cols;
+
+    for (unsigned i = 0; i < n; i++)
+        result += u.mat[i] * u.mat[i];
+
+    return sqrt(result);
+}
+
+Matrix matrix_householder(Matrix u)
+{
+    if (u.cols != 1 && u.rows != 1)
+        return (Matrix) {0, 0, NULL};
+
+    unsigned n = (u.cols == 1) ? u.rows : u.cols;
+    Matrix  H = matrix_new(n, n);
+    double sum_sq = norm_2(u);
+    sum_sq *= sum_sq;
+
+    for (unsigned i = 0; i < n; i++) {
+        *pointer_to(H, i, i) = 1 - 2 * u.mat[i] * u.mat[i] / sum_sq;
+
+        for (unsigned j = i + 1; j < n; j++)
+            *pointer_to(H, i, j) = *pointer_to(H, j, i) = -2 * u.mat[i] * u.mat[j] / sum_sq;
+    }
+
+    return H;
+}
+
+Matrix matrix_ls_solve(Matrix A, Matrix b)
+{
+    unsigned m = A.rows, n = A.cols;
+    Matrix u = matrix_new(m, 1), H_m = matrix_new(m, m), H;
+    double *u_mat = u.mat;
+    A = matrix_copy(A);
+    b = matrix_copy(b);
+
+    for (unsigned k = 0; k < n; k++) {
+        for (unsigned j = k; j < m; j++)
+            u_mat[j] = *pointer_to(A, j, k);
+
+        u.mat[0] += (u.mat[0] >= 0) ? norm_2(u) : -norm_2(u);
+        H = matrix_householder(u);
+
+        for (unsigned i = 0; i < m; i++) {
+            if (i < k)
+                for (unsigned j = 0; j < n; j++)
+                    *pointer_to(H_m, i, j) = (i == j) ? 1 : 0;
+            else
+                memcpy(pointer_to(H_m, i, k), pointer_to(H, i - k, 0), sizeof(double) * H.cols);
+        }
+
+        Matrix aux = matrix_multiply(H_m, A);
+        matrix_free(&A);
+        A = aux;
+        aux = matrix_multiply(H_m, b);
+        matrix_free(&b);
+        b = aux;
+
+        u.mat++;
+        u.rows--;
+        matrix_free(&H);
+    }
+    u.mat = u_mat;
+    matrix_free(&u);
+    matrix_free(&H_m);
+    A.rows = n;
+    b.rows = n;
+    Matrix x = matrix_system_solve(A, b);
+    matrix_free(&b);
+    matrix_free(&A);
+
+    return x;
 }

@@ -1,16 +1,11 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "include/matrix.h"
-#include "include/gc.h"
-
-void exit_and_explain(void);
 
 int main()
 {
-    Matrix A, A_t, A_t_A, T, Y, A_t_Y, X;
+    Matrix A, t, y, x;
     int rows, cols;
-    atexit(GC_empty);
 
     printf("Ingrese grado de polinomio: ");
     scanf("%d", &cols);
@@ -22,40 +17,28 @@ int main()
         printf("INFO: Tomando un polinomio del grado del tamaño de la lista");
     }
 
-    T = matrix_new(rows, 1);
-    Y = matrix_new(rows, 1);
+    t = matrix_new(rows, 1);
+    y = matrix_new(rows, 1);
 
-    matrix_get(&T);
-    matrix_get(&Y);
+    matrix_get(&t);
+    matrix_get(&y);
 
-    A = matrix_vander(T, cols);
+    A = matrix_vander(t, cols);
+    matrix_free(&t);
 
-    A_t = matrix_transpose_of(A);
-    A_t_A = matrix_multiply(A_t, A);
-    A_t_Y = matrix_multiply(A_t, Y);
-    X = matrix_system_solve(A_t_A, A_t_Y);
+    x = matrix_ls_solve(A, y);
+    matrix_free(&A);
+    matrix_free(&y);
 
     puts("El polinomio que mejor aproxima la lista de datos es:");
-    for (unsigned i = 0; i < X.rows; i++) {
-        printf((matrix_read(X, i, 0) >= 0) ? "+ " : "- ");
-        if (i < X.rows - 1)
-            printf("%1.4f * x^%d ", fabs(matrix_read(X, i, 0)), X.rows - i - 1);
+    for (unsigned i = 0; i < x.rows; i++) {
+        printf((matrix_read(x, i, 0) >= 0) ? "+ " : "- ");
+        if (i < x.rows - 1)
+            printf("%1.6f * x^%d ", fabs(matrix_read(x, i, 0)), x.rows - i - 1);
         else
-            printf("%1.4f\n", fabs(matrix_read(X, i, 0)));
+            printf("%1.6f\n", fabs(matrix_read(x, i, 0)));
     }
-    matrix_free(&A);
-    matrix_free(&T);
-    matrix_free(&Y);
-    matrix_free(&X);
-    matrix_free(&A_t);
-    matrix_free(&A_t_Y);
-    matrix_free(&A_t_A);
+    matrix_free(&x);
 
     return 0;
-}
-
-void exit_and_explain(void)
-{
-    fprintf(stderr, "Error de memoria\n");
-    exit(EXIT_FAILURE);
 }

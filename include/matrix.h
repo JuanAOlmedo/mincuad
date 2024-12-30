@@ -26,11 +26,11 @@ double matrix_read(Matrix A, unsigned row, unsigned col);
 /* Escribe x en A[row, col] */
 void matrix_write(Matrix *A, unsigned row, unsigned col, float x);
 
-/* Devuelve un arreglo con la columna n-ésima de A */
-double *matrix_col(Matrix A, unsigned col);
+/* Devuelve una matriz que es columna col de A */
+Matrix matrix_col(Matrix A, unsigned col);
 
-/* Devuelve un arreglo con la fila n-ésima de A */
-double *matrix_row(Matrix A, unsigned row);
+/* Devuelve una matriz que es la fila row de A */
+Matrix matrix_row(Matrix A, unsigned row);
 
 /* Libera la memoria asignada a la matriz A */
 void matrix_free(Matrix *A);
@@ -75,4 +75,9 @@ Matrix matrix_vander(Matrix b, unsigned cols);
 
 /* Devuelve la identidad de tamaño n */
 Matrix matrix_eye(unsigned n);
+
+Matrix matrix_householder(Matrix u);
+
+Matrix matrix_ls_solve(Matrix A, Matrix b);
+
 #endif
