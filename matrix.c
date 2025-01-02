@@ -406,38 +406,40 @@ Matrix matrix_householder(Matrix u)
 Matrix matrix_ls_solve(Matrix A, Matrix b)
 {
     unsigned m = A.rows, n = A.cols;
-    unsigned p[n];
-    Matrix u = matrix_new(m, 1), H_m = matrix_new(m, m), H;
+    Matrix u = matrix_new(m, 1),
+           H_m = matrix_new(m, m),
+           aux;
     double *u_mat = u.mat;
-    A = matrix_copy(A);
-    b = matrix_copy(b);
 
     for (unsigned k = 0; k < n; k++) {
         for (unsigned j = k; j < m; j++)
             u_mat[j] = *pointer_to(A, j, k);
 
-        u.mat[0] += (u.mat[0] >= 0) ? norm_2(u) : -norm_2(u);
-        H = matrix_householder(u);
+        u_mat[k] += (u_mat[k] >= 0) ? norm_2(u) : -norm_2(u);
+        double sum_sqr = norm_2(u);
+        sum_sqr *= sum_sqr;
 
-        for (unsigned i = 0; i < m; i++) {
-            if (i < k)
-                for (unsigned j = 0; j < n; j++)
-                    *pointer_to(H_m, i, j) = (i == j) ? 1 : 0;
-            else
-                memcpy(pointer_to(H_m, i, k), pointer_to(H, i - k, 0), sizeof(double) * H.cols);
+        if (k > 0)
+            for (unsigned j = 0; j < m; j++)
+                *pointer_to(H_m, k - 1, j) = *pointer_to(H_m, j, k - 1) = (k - 1 == j) ? 1 : 0;
+
+        for (unsigned i = k; i < m; i++) {
+            *pointer_to(H_m, i, i) = 1 - 2 * u_mat[i] * u_mat[i] / sum_sqr;
+            for (unsigned j = i + 1; j < m; j++)
+                *pointer_to(H_m, i, j) = *pointer_to(H_m, j, i) = -2 * u_mat[i] * u_mat[j] / sum_sqr;
         }
 
         Matrix aux = matrix_multiply(H_m, A);
-        matrix_free(&A);
+        if (k != 0)
+            matrix_free(&A);
         A = aux;
         aux = matrix_multiply(H_m, b);
-        matrix_free(&b);
+        if (k != 0)
+            matrix_free(&b);
         b = aux;
 
-        u.mat++;
         u.rows--;
-        matrix_free(&H);
-        p[k] = k;
+        u.mat++;
     }
     u.mat = u_mat;
     matrix_free(&u);
@@ -445,7 +447,7 @@ Matrix matrix_ls_solve(Matrix A, Matrix b)
     A.rows = n;
     b.rows = n;
     Matrix x = matrix_new(n, 1);
-    forward_sub(A, b, &x, p);
+    back_sub(A, b, &x);
     matrix_free(&b);
     matrix_free(&A);
 
