@@ -2,7 +2,8 @@
 #include <math.h>
 #include "include/matrix.h"
 
-int approx(double x, double y) {
+int approx(double x, double y)
+{
 	return fabs(x - y) < 1e-8;
 }
 
@@ -16,6 +17,7 @@ int main()
 		scanf("%d", &cols);
 	}
 
+	// El número de columnas de la matriz es 1 + el grado del polinomio
 	cols++;
 
 	while (rows < cols) {
@@ -39,14 +41,17 @@ int main()
     printf("El polinomio que mejor aproxima la lista de datos es:\np(x) = ");
     for (unsigned i = 0; i < x.rows; i++) {
 		double x_i = matrix_read(x, i, 0);
+		// Mostrar el término cuando el coeficiente no es 0
 		if (approx(fabs(x_i), 1)) {
+			// Si x_i == 1 o x_i == -1, no mostrar el coeficiente exacto
+			printf((x_i >= 0) ? "+ " : "- ");
 			printf("x^%u ", x.rows - i - 1);
 		} else if (!approx(x_i, 0)) {
 			printf((x_i >= 0) ? "+ " : "- ");
 			if (i < x.rows - 1)
 				printf("%1.7fx^%u ", fabs(x_i), x.rows - i - 1);
 			else
-				printf("%1.7f", fabs(x_i));
+				printf("%1.7f", fabs(x_i)); // Término constante
 		}
     }
 	putchar('\n');
