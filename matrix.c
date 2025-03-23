@@ -163,7 +163,7 @@ double matrix_det(Matrix A)
     return result;
 }
 
-static void forward_sub(Matrix L, Matrix b, Matrix *x, unsigned *p)
+static void forward_sub(Matrix L, Matrix b, Matrix *x, const unsigned *p)
 {
     x->mat[0] = *pointer_to(b, p[0], 0) / *pointer_to(L, 0, 0);
     for (unsigned k = 1; k < x->rows; k++) {
@@ -293,7 +293,7 @@ void matrix_transpose(Matrix *A)
         }
 }
 
-static unsigned max_col(Matrix A, unsigned *p, unsigned col)
+static unsigned max_col(Matrix A, const unsigned *p, unsigned col)
 {
     double max = fabs(*pointer_to(A, p[col], col));
     unsigned max_i = col;
